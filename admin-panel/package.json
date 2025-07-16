@@ -10,7 +10,9 @@
   },
   "dependencies": {
     "@types/jsonwebtoken": "^9.0.10",
+    "autoprefixer": "^10.4.21",
     "bcryptjs": "^3.0.2",
+    "daisyui": "^5.0.46",
     "dotenv": "^17.0.1",
     "drizzle-orm": "^0.44.2",
     "fs": "^0.0.1-security",
@@ -18,13 +20,14 @@
     "next": "15.3.4",
     "next-auth": "5.0.0-beta.25",
     "pg": "^8.16.3",
+    "postcss": "^8.5.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-toastify": "^11.0.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-    "@tailwindcss/postcss": "^4",
+    "@tailwindcss/postcss": "^4.1.11",
     "@types/node": "^20",
     "@types/pg": "^8.15.4",
     "@types/react": "^19",
@@ -32,7 +35,7 @@
     "drizzle-kit": "^0.31.4",
     "eslint": "^9",
     "eslint-config-next": "15.3.4",
-    "tailwindcss": "^4",
+    "tailwindcss": "^4.1.11",
     "typescript": "^5"
   }
 }

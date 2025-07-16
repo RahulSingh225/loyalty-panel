@@ -24,18 +24,18 @@ export async function GET(request: Request, context: { params: Promise<{ type: s
           .from(userMaster)
           .leftJoin(retailer, eq(userMaster.userId, retailer.userId));
         break;
-      case "enrollment":
-        return
-        data = await db
-          .select({
-            id: enrollments.id,
-            username: users.username,
-            courseName: enrollments.courseName,
-            enrolledAt: enrollments.enrolledAt,
-          })
-          .from(enrollments)
-          .leftJoin(users, eq(enrollments.userId, users.id));
-        break;
+      // case "enrollment":
+      //   return
+      //   data = await db
+      //     .select({
+      //       id: enrollments.id,
+      //       username: users.username,
+      //       courseName: enrollments.courseName,
+      //       enrolledAt: enrollments.enrolledAt,
+      //     })
+      //     .from(enrollments)
+      //     .leftJoin(users, eq(enrollments.userId, users.id));
+      //   break;
       case "point-transfer":
         data = await db
           .select()

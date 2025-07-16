@@ -48,62 +48,65 @@ export default function ReportPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
+    <div className="container mx-auto p-8">
       <h1 className="mb-6 text-3xl font-bold capitalize">{params.type} Report</h1>
-      <table className="w-full rounded-lg bg-white shadow-md">
-        <thead>
-          <tr className="bg-gray-200">
-            <th className="p-4 text-left">ID</th>
-            <th className="p-4 text-left">Username</th>
-            {params.type === "login" && <th className="p-4 text-left">Login Time</th>}
-            {params.type === "enrollment" && (
-              <>
-                <th className="p-4 text-left">Course Name</th>
-                <th className="p-4 text-left">Enrolled At</th>
-              </>
-            )}
-            {params.type === "point-transfer" && (
-              <>
-                <th className="p-4 text-left">Points</th>
-                <th className="p-4 text-left">Transfer Date</th>
-              </>
-            )}
-            {params.type === "claim" && (
-              <>
-                <th className="p-4 text-left">Claim Type</th>
-                <th className="p-4 text-left">Claimed At</th>
-              </>
-            )}
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((item: any) => (
-            <tr key={item.id} className="border-b">
-              <td className="p-4">{item.id}</td>
-              <td className="p-4">{item.username}</td>
-              {params.type === "login" && <td className="p-4">{item.loginTime}</td>}
+      <div className="overflow-x-auto">
+        <table className="table w-full">
+          {/* head */}
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Username</th>
+              {params.type === "login" && <th>Login Time</th>}
               {params.type === "enrollment" && (
                 <>
-                  <td className="p-4">{item.courseName}</td>
-                  <td className="p-4">{item.enrolledAt}</td>
+                  <th>Course Name</th>
+                  <th>Enrolled At</th>
                 </>
               )}
               {params.type === "point-transfer" && (
                 <>
-                  <td className="p-4">{item.points}</td>
-                  <td className="p-4">{item.transferDate}</td>
+                  <th>Points</th>
+                  <th>Transfer Date</th>
                 </>
               )}
               {params.type === "claim" && (
                 <>
-                  <td className="p-4">{item.claimType}</td>
-                  <td className="p-4">{item.claimedAt}</td>
+                  <th>Claim Type</th>
+                  <th>Claimed At</th>
                 </>
               )}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {data.map((item: any) => (
+              <tr key={item.id}>
+                <td>{item.id}</td>
+                <td>{item.username}</td>
+                {params.type === "login" && <td>{item.loginTime}</td>}
+                {params.type === "enrollment" && (
+                  <>
+                    <td>{item.courseName}</td>
+                    <td>{item.enrolledAt}</td>
+                  </>
+                )}
+                {params.type === "point-transfer" && (
+                  <>
+                    <td>{item.points}</td>
+                    <td>{item.transferDate}</td>
+                  </>
+                )}
+                {params.type === "claim" && (
+                  <>
+                    <td>{item.claimType}</td>
+                    <td>{item.claimedAt}</td>
+                  </>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
