@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "docker:build": "docker build -t spacempact/loyalty-panel:stage --platform linux/amd64 .",
+    "docker:push" : "docker push spacempact/loyalty-panel:stage"
   },
   "dependencies": {
     "@types/jsonwebtoken": "^9.0.10",
@@ -17,6 +19,7 @@
     "drizzle-orm": "^0.44.2",
     "fs": "^0.0.1-security",
     "jsonwebtoken": "^9.0.2",
+    "moment": "^2.30.1",
     "next": "15.3.4",
     "next-auth": "5.0.0-beta.25",
     "pg": "^8.16.3",

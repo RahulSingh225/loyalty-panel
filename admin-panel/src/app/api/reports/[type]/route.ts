@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { auth } from "@/auth";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { userMaster } from "@/db/schema";
 import { retailer } from "@/db/schema";
 import { pointAllocationLog } from "@/db/schema";
 import { redemptionRequest } from "@/db/schema";
+import moment from "moment";
 
 export async function GET(request: Request, context: { params: Promise<{ type: string }> }) {
   const session = await auth();
@@ -20,33 +21,69 @@ export async function GET(request: Request, context: { params: Promise<{ type: s
     switch (type) {
       case "login":
         data = await db
-          .select()
+          .select({id:userMaster.userId,username:userMaster.username,loginTime:userMaster.updatedAt})
           .from(userMaster)
-          .leftJoin(retailer, eq(userMaster.userId, retailer.userId));
+          .orderBy(desc(userMaster.updatedAt))
+          .then((rows) =>
+        rows.map((row) => ({
+          ...row,
+          loginTime: row.loginTime
+            ? moment(row.loginTime).format('LLL')
+            : null,
+        }))
+      );
+          
         break;
-      // case "enrollment":
-      //   return
-      //   data = await db
-      //     .select({
-      //       id: enrollments.id,
-      //       username: users.username,
-      //       courseName: enrollments.courseName,
-      //       enrolledAt: enrollments.enrolledAt,
-      //     })
-      //     .from(enrollments)
-      //     .leftJoin(users, eq(enrollments.userId, users.id));
-      //   break;
+      case "enrollment":
+        
+        data = await db
+          .select({
+            id: retailer.userId,
+            username: retailer.shopName,
+            mobileNumber: retailer.whatsappNo,
+            enrolledAt: retailer.createdAt,
+          })
+          .from(retailer)
+          .orderBy(desc(retailer.createdAt))
+          .then((rows) =>
+        rows.map((row) => ({
+          ...row,
+          enrolledAt: row.enrolledAt
+            ? moment(row.enrolledAt).format('LLL')
+            : null,
+        }))
+      );
+        break;
       case "point-transfer":
         data = await db
-          .select()
+          .select({id:pointAllocationLog.allocationId,username:userMaster.username,points:pointAllocationLog.pointsAllocated,transferDate:pointAllocationLog.allocationDate})
           .from(pointAllocationLog)
           
+          .innerJoin(userMaster,eq(pointAllocationLog.targetUserId,userMaster.userId))
+          .orderBy(desc(pointAllocationLog.allocationDate))
+          .then((rows) =>
+        rows.map((row) => ({
+          ...row,
+          transferDate: row.transferDate
+            ? moment(row.transferDate).format('LLL')
+            : null,
+        }))
+      );          
         break;
       case "claim":
         data = await db
-          .select()
+          .select({id:redemptionRequest.requestId,username:userMaster.username,status:redemptionRequest.status,claimDate:redemptionRequest.requestDate})
           .from(redemptionRequest)
-          
+          .innerJoin(userMaster,eq(redemptionRequest.userId,userMaster.userId))
+          .orderBy(desc(redemptionRequest.requestDate))
+           .then((rows) =>
+        rows.map((row) => ({
+          ...row,
+          claimDate: row.claimDate
+            ? moment(row.claimDate).format('LLL')
+            : null,
+        }))
+      );         
         break;
       default:
         return NextResponse.json({ error: "Invalid report type" }, { status: 400 });

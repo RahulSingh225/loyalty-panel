@@ -40,7 +40,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         try {
           console.log("Credentials received:", credentials);
 
-          return {id: "1", name: "Admin", role: "admin"}; // Temporary return for testing
+          //return {id: "1", name: "Admin", role: "admin"}; // Temporary return for testing
           if (!credentials?.username || !credentials?.password) {
             throw new Error("Username and password are required");
           }
@@ -60,10 +60,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             throw new Error("Password not found for user");
           }
 
-          const isValid = await bcrypt.compare(
-            String(credentials.password),
-            String(user[0].password)
-          );
+          const isValid = credentials.password===user[0].password
 
           if (!isValid) {
             throw new Error("Invalid credentials");
@@ -74,7 +71,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return {
             id: user[0].userId.toString(),
             name: user[0].username,
-            //role: user[0].roleId ? String(user[0].roleId) : undefined,
+            role: user[0].userType ? String(user[0].userType) : undefined,
           };
         } catch (error) {
           const { message } = handleError(error, "Authorize");

@@ -1,5 +1,139 @@
 @import "tailwindcss";
-@plugin "daisyui";
+@plugin "daisyui"{
+    themes: light , dark --default, cupcake,bumblebee,
+      emerald,
+      corporate,
+      synthwave,
+      retro,
+      cyberpunk,
+      valentine,
+      halloween,
+      garden,
+      forest,
+      aqua,
+      lofi,
+      pastel,
+      fantasy,
+      wireframe,
+      black,
+      luxury,
+      dracula,
+      cmyk,
+      autumn,
+      business,
+      acid,
+      lemonade,
+      night,
+      coffee,
+      winter;
+}
+
+/* tailwind.config.js or CSS file */
+@keyframes gradient-x {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes fade-in-down {
+  0% { opacity: 0; transform: translateY(-10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in-up {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.animate-gradient-x {
+  background-size: 200% 200%;
+  animation: gradient-x 15s ease infinite;
+}
+.animate-fade-in-down {
+  animation: fade-in-down 0.5s ease-out;
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out;
+}
+
+@keyframes glow {
+          0% {
+            text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #00f, 0 0 40px #00f, 0 0 50px #00f, 0 0 60px #00f, 0 0 70px #00f;
+          }
+          100% {
+            text-shadow: 0 0 20px #fff, 0 0 30px #4d4dff, 0 0 40px #4d4dff, 0 0 50px #4d4dff, 0 0 60px #4d4dff, 0 0 70px #4d4dff, 0 0 80px #4d4dff;
+          }
+        }
+        .glow-effect {
+          animation: glow 1.5s ease-in-out infinite alternate;
+        }
+
+
+/* global.css */
+@keyframes shine {
+  0% { background-position: 0; }
+  50% { background-position: 110px; }
+  100% { background-position: 220px; }
+}
+.btn-shine {
+  position: relative;
+  display: inline-block;
+  padding: 8px 16px;
+  color: #1a7cde;
+  background: linear-gradient(to right, #9f9f9f 0%, #ffffff 10%, #868686 20%);
+  background-position: 0;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shine 5s infinite linear;
+  animation-fill-mode: forwards;
+  -webkit-text-size-adjust: none;
+  font-weight: 200;
+  font-size: 1.5rem;
+  text-decoration: none;
+  white-space: nowrap;
+  font-family: "Poppins", system-ui, -apple-system, sans-serif;
+}
+
+/* From Uiverse.io by gharsh11032000 */ 
+.button {
+  cursor: pointer;
+  position: relative;
+  padding: 10px 24px;
+  font-size: 18px;
+  color: rgb(0, 0, 0); 
+  border: 2px solid rgb(185, 243, 51);
+  border-radius: 34px;
+  background-color: transparent;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.320, 1);
+  overflow: hidden;
+}
+
+.button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 50px;
+  height: 50px;
+  border-radius: inherit;
+  scale: 0;
+  z-index: -1;
+   background-color: rgb(211, 235, 24); 
+  transition: all 0.6s cubic-bezier(0.23, 1, 0.320, 1);
+}
+
+.button:hover::before {
+  scale: 3;
+}
+
+.button:hover {
+  color: #fff;
+  scale: 1.1;
+  box-shadow: 0 0px 20px rgba(13, 236, 125, 0.481);
+}
+
+.button:active {
+  scale: 1;
+}
+
 
 
 /* :root {
