@@ -11,6 +11,7 @@
     "docker:push" : "docker push spacempact/loyalty-panel:stage"
   },
   "dependencies": {
+    "aws-sdk": "2.1692.0",
     "@types/jsonwebtoken": "^9.0.10",
     "autoprefixer": "^10.4.21",
     "bcryptjs": "^3.0.2",
