@@ -289,8 +289,8 @@ export default function ContentManagementPage() {
                         <td className="text-sm md:text-base">{item.contentType}</td>
                         <td className="text-sm md:text-base truncate max-w-xs">{item.content || '-'}</td>
                         <td className="text-sm md:text-base truncate max-w-xs">
-                          {item.imagePdfUrl ? (
-                            <a href={item.imagePdfUrl} target="_blank" rel="noopener noreferrer" className="link link-primary">
+                          {item.contentResourceUrl ? (
+                            <a href={item.contentResourceUrl} target="_blank" rel="noopener noreferrer" className="link link-primary">
                               View
                             </a>
                           ) : '-'}

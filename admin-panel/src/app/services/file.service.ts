@@ -51,16 +51,24 @@ export class FileService {
 
   async generateSignedUrl(filePath: string) {
     try {
+      const ext = path.extname(filePath).toLowerCase();
+      let responseContentType = undefined;
 
-      const params = {
+      if (ext === ".pdf") {
+        responseContentType = "application/pdf";
+      } else if ([".jpg", ".jpeg", ".png"].includes(ext)) {
+        responseContentType = "image/jpeg";
+      }
+
+      const params: S3.GetObjectRequest & { Expires: number; ResponseContentDisposition?: string; ResponseContentType?: string } = {
         Bucket: this.bucketName,
         Key: filePath,
-        Expires: 15 * 60,
-        ResponseContentDisposition: "inline", // URL expiration time in seconds
+        Expires: 15 * 60, // 15 minutes
+        ResponseContentDisposition: "inline",
+        ...(responseContentType && { ResponseContentType: responseContentType }),
       };
 
       const signedUrl = this.s3.getSignedUrl("getObject", params);
-
       return signedUrl;
     } catch (error) {
       console.error("Error generating signed URL:", error);

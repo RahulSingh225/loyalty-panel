@@ -6,6 +6,8 @@ import { randomUUID } from 'crypto';
 import { asc, desc, eq, max } from "drizzle-orm";
 import moment from 'moment';
 import { NextRequest, NextResponse } from 'next/server';
+import Busboy from 'busboy';
+import { Readable } from 'stream';
 
 export async function GET() {
 
@@ -34,7 +36,21 @@ export async function GET() {
             : null,
         }))
       );
-    return NextResponse.json(data);
+    console.log(data);
+    const newData = await Promise.all(
+          data.map(async (data) => {
+            const signedUrl = data.imagePdfUrl
+              ? await fileService.generateSignedUrl(data.imagePdfUrl)
+              : null;
+    
+            return {
+              ...data,
+              contentResourceUrl: signedUrl,
+            };
+          })
+        );
+    console.log(newData)
+    return NextResponse.json(newData);
   } catch (error) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
@@ -45,9 +61,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
 
   const session = await auth();
-  // if (!session?.user || session.user.role !== "admin") {
-  //     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  // }
+
   try {
     let data: any = [];
     const formData = await req.formData();
@@ -59,11 +73,13 @@ export async function POST(req: NextRequest) {
       const filePath = `uploads/${randomUUID()}-${file.name}`;
       fileUrl = await fileService.upload(buffer, filePath);
     }
-    // const url = await fileService.upload(formData.get('file') as any, '/img')
+    const [maxIdResult] = await db.select({ maxId: max(contentManagement.contentId) }).from(contentManagement);
+    const nextContentId = (maxIdResult?.maxId ?? 0) + 1;
     console.log("vdsvdsc", fileUrl)
     await db.transaction(async (tran) => {
       // Step 2: Insert the new content
       await tran.insert(contentManagement).values({
+        contentId: nextContentId,
         contentType: formData?.get("contentType") as string,
         content: formData?.get("content") as string,
         imagePdfUrl: fileUrl || "",
@@ -71,7 +87,6 @@ export async function POST(req: NextRequest) {
       });
     })
 
-    // console.log("url",await fileService.generateSignedUrl('uploads/69a9d052-75b0-4740-b6e0-dbe503f5ec8b-historys-hockey-stick-worldwide-historical-gross-domestic-product-percapita-1990.png'))
 
     return NextResponse.json({ message: "success" });
   } catch (error) {
