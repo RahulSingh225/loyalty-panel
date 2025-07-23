@@ -39,7 +39,9 @@ export class FileService {
         )}`;
         break;
       case "CLAIMS":
-        filePath = `RANJIT/PRODUCT_CATALOG/${filename}`;
+        filePath = `RANJIT/PRODUCT_CATALOG/${randomUUID()}${path.extname(
+          filename
+        )}`;
         break;
       default:
         break;
@@ -49,7 +51,7 @@ export class FileService {
 
   async generateSignedUrl(filePath: string) {
     try {
-      
+
       const params = {
         Bucket: this.bucketName,
         Key: filePath,

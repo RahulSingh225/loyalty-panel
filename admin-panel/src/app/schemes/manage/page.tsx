@@ -45,7 +45,6 @@ export default function LoyaltySchemesPage() {
         if (res.status !== 200) {
           throw new Error(result.error || "Failed to fetch content");
         }
-
         setData(result);
       } catch (error) {
         const { message } = handleError(error, "Content Management");
@@ -83,13 +82,23 @@ export default function LoyaltySchemesPage() {
         ? `/api/schemes/${selectedScheme.schemeId}`
         : '/api/schemes';
 
+
+      const form = new FormData();
+      form.append('schemeName', formData.schemeName);
+      form.append('startDate', formData.startDate);
+      form.append('endDate', formData.endDate);
+      form.append('roles', formData.roles);
+
+      // Attach file if present
+      if (file) {
+        form.append('file', file);
+      }
       const res = await fetch(url, {
         method,
         headers: {
-          'Content-Type': 'application/json',
           Authorization: `Bearer ${session.user.id}`,
         },
-        body: JSON.stringify(formData),
+        body: form,
       });
 
       const result = await res.json();
@@ -115,15 +124,15 @@ export default function LoyaltySchemesPage() {
     }
   };
 
-  const handleEdit = (content:any) => {
+  const handleEdit = (content: any) => {
     setSelectedScheme(content);
     setFormData((prev) => ({
-      ...prev, 
+      ...prev,
       startDate: content.startDate,
       endDate: content.endDate || '',
       imagePdfUrl: content.imagePdfUrl || '',
       roles: content.roles || '',
-      schemeName: content.schemeName || '' 
+      schemeName: content.schemeName || ''
     }));
 
     setIsModalOpen(true);
@@ -242,7 +251,7 @@ export default function LoyaltySchemesPage() {
                 <button
                   onClick={() => {
                     setSelectedScheme(null);
-                    setFormData((prev) => ({ ...prev, startDate: '', endDate: '', roles: '', imagePdfUrl: '', schemeName: ''  }));
+                    setFormData((prev) => ({ ...prev, startDate: '', endDate: '', roles: '', imagePdfUrl: '', schemeName: '' }));
                     setIsModalOpen(true);
                   }}
                   className="btn btn-primary btn-sm rounded-btn bg-gradient-to-r from-primary to-secondary text-primary-content border-none hover:from-primary-focus hover:to-secondary-focus hover:scale-110 transition-all duration-300"
@@ -263,7 +272,7 @@ export default function LoyaltySchemesPage() {
                       <th className="text-sm md:text-base">Start Date</th>
                       <th className="text-sm md:text-base">End Date</th>
                       <th className="text-sm md:text-base">Created At</th>
-                      <th className="text-sm md:text-base">Action</th>
+                      {/* <th className="text-sm md:text-base">Action</th> */}
                     </tr>
                   </thead>
                   <tbody>
@@ -276,8 +285,8 @@ export default function LoyaltySchemesPage() {
                         <td className="text-sm md:text-base">{item.schemeName}</td>
                         <td className="text-sm md:text-base">{item.isActive}</td>
                         <td className="text-sm md:text-base truncate max-w-xs">
-                          {item.schemeResourcee ? (
-                            <a href={item.schemeResourcee} target="_blank" rel="noopener noreferrer" className="link link-primary">
+                          {item.schemeResourceUrl ? (
+                            <a href={item.schemeResourceUrl} target="_blank" rel="noopener noreferrer" className="link link-primary">
                               View
                             </a>
                           ) : '-'}
@@ -286,7 +295,7 @@ export default function LoyaltySchemesPage() {
                         <td className="text-sm md:text-base">{item.startDate}</td>
                         <td className="text-sm md:text-base">{item.endDate}</td>
                         <td className="text-sm md:text-base">{new Date(item.lastUpdatedAt).toLocaleString()}</td>
-                        <td className="text-sm md:text-base">
+                        {/* <td className="text-sm md:text-base">
                           <button
                             onClick={() => handleEdit(item)}
                             className="btn btn-ghost btn-sm text-primary hover:bg-primary/20 mr-2"
@@ -302,7 +311,7 @@ export default function LoyaltySchemesPage() {
                           >
                             Delete
                           </button>
-                        </td>
+                        </td> */}
                       </tr>
                     ))}
                   </tbody>
@@ -445,12 +454,24 @@ export default function LoyaltySchemesPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setIsModalOpen(false)}
+                    // onClick={() => setIsModalOpen(false)}
+                    onClick={() => {
+                      setIsModalOpen(false);
+                      setFile(null);
+                      setFormData({
+                        schemeName: '',
+                        startDate: '',
+                        endDate: '',
+                        roles: '',
+                        imagePdfUrl: '',
+                      });
+                      setSelectedScheme(null);
+                    }}
                     className="btn btn-ghost"
                   >
                     Cancel
                   </button>
-                </div>  
+                </div>
               </form>
             </div>
           </div>

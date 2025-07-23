@@ -8,17 +8,14 @@ const PrivacyPolicy = () => {
           <h1 className="mb-4 text-3xl font-bold text-gray-900">
             Privacy Policy
           </h1>
-          <p className="mb-8 text-sm italic text-gray-600">
-            Last updated: February 3, 2025
-          </p>
 
           <section className="mb-8">
             <p className="mb-4 text-gray-600">
               The purpose of this Privacy Policy (&quot;Policy&quot;) is to
               inform customers, suppliers, and other users (&quot;Users&quot;)
-              about the personal information and data collected by Ranjit
-              (&quot;Ranjit,&quot; &quot;we,&quot; &quot;us,&quot; or
-              &quot;our&quot;) through our website (www.ranjit.in) and mobile
+              about the personal information and data collected by Talkk Pvt Ltd
+              (&quot;Talkk,&quot; &quot;we,&quot; &quot;us,&quot; or
+              &quot;our&quot;) through our website (www.talkk.tech) and mobile
               application (collectively, the &quot;Platform&quot;). This Policy
               demonstrates our commitment to complying with the Information
               Technology Act, 2000, and the Information Technology (Reasonable
@@ -29,11 +26,11 @@ const PrivacyPolicy = () => {
 
           <section className="mb-8">
             <h2 className="mb-4 text-2xl font-semibold text-gray-800">
-              PART I – Information Ranjit Collects and Controls
+              PART I – Information Talkk Collects and Controls
             </h2>
 
             <h3 className="mb-3 text-xl font-medium text-gray-800">
-              1. What Information Ranjit Collects
+              1. What Information Talkk Collects
             </h3>
             <p className="mb-4 text-gray-600">
               We collect information only for legitimate purposes. Information
@@ -60,7 +57,7 @@ const PrivacyPolicy = () => {
                 digits, expiry date, and cardholder name/address are retained).
               </li>
               <li className="mb-2">
-                Interactions with Ranjit: Communications (emails, calls, chats)
+                Interactions with Talkk: Communications (emails, calls, chats)
                 may be recorded for quality improvement.
               </li>
               <li className="mb-2">
@@ -92,7 +89,7 @@ const PrivacyPolicy = () => {
 
           <section className="mb-8">
             <h2 className="mb-4 text-2xl font-semibold text-gray-800">
-              PART II – Information Ranjit Processes on Your Behalf
+              PART II – Information Talkk Processes on Your Behalf
             </h2>
             <h3 className="mb-3 text-xl font-medium text-gray-800">
               1. Service Data
@@ -134,9 +131,9 @@ const PrivacyPolicy = () => {
                 For concerns about adherence to this Policy, contact us:
               </p>
               <ul className="text-gray-600">
-                <li className="mb-2">Company: Ranjit</li>
-                <li className="mb-2">Email: support@ranjit.in</li>
-                <li className="mb-2">Website: www.ranjit.in</li>
+                <li className="mb-2">Company: Talkk Pvt Ltd</li>
+                <li className="mb-2">Email: support@talkk.tech</li>
+                <li className="mb-2">Website: www.talkk.tech</li>
               </ul>
             </div>
           </section>
