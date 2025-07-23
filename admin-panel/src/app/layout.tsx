@@ -63,9 +63,9 @@ export default async function RootLayout({
         </div>
         <div>
           <div className="grid grid-flow-col gap-4">
-            <Link href="/about" className="link link-hover">About</Link>
-            <Link href="/contact" className="link link-hover">Contact</Link>
-            <Link href="/terms" className="link link-hover">Terms</Link>
+            <Link href="https://www.ranjit.in/about.php" target='_blank' className="link link-hover">About</Link>
+            <Link href="https://www.ranjit.in/contact.php" target='_blank' className="link link-hover">Contact</Link>
+            {/* <Link href="/terms" className="link link-hover">Terms</Link> */}
             <Link href="/privacy" className="link link-hover">Privacy</Link>
           </div>
         </div>
