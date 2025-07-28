@@ -52,7 +52,8 @@ export async function POST(req: NextRequest) {
         let data: any = [];
 
         const body = await req.json();
-
+        console.log(body)
+return NextResponse.json({ message: "success" });
         await db.transaction(async (tran) => {
             const [maxIdResult] = await tran
                 .select({ maxId: max(notificationLog.logId) })

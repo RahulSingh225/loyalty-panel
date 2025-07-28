@@ -1,183 +1,117 @@
-'use client';
+'use client'
 
 import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { showErrorToast } from "@/components/toastProvider";
 import { handleError } from "@/utils/errorHandler";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
+import { redirect } from "next/navigation";
 
 export default function CommunicationsPage() {
-  const [data, setData] = useState([]);
-  const [error, setError] = useState(null);
   const { data: session, status } = useSession();
-  const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedContent, setSelectedContent] = useState(null);
-  const [deleteContentId, setDeleteContentId] = useState(null);
   const [formData, setFormData] = useState({
-    subject: '',
+    title: '',
     body: '',
-    isAll: '',
+    imageUrl: '',
+    dataKey: '',
+    dataValue: '',
+    androidPriority: 'high' as 'normal' | 'high',
+    androidTtl: '3600',
+    androidChannelId: 'default_channel_id',
+    targetType: 'single' as 'single' | 'selected' | 'all',
+    token: '',
+    tokens: '',
   });
-  const rowsPerPage = 10;
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        if (!session) {
-          throw new Error("User session is not available.");
-        }
-
-        const res = await fetch('/api/communication', {
-          headers: {
-            Authorization: `Bearer ${session.user.id}`,
-          },
-        });
-
-        const result = await res.json();
-
-        if (res.status !== 200) {
-          throw new Error(result.error || "Failed to fetch content");
-        }
-
-        setData(result);
-      } catch (error) {
-        const { message } = handleError(error, "Communication");
-        setError(message);
-        showErrorToast(message);
-      }
-    }
-
-    if (session) {
-      fetchData();
-    }
-  }, [session]);
-
-  const handleInputChange = (e:any) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  // Handle input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
   };
 
-  const handleSubmit = async (e) => {
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const method = selectedContent ? 'PUT' : 'POST';
-      const url = selectedContent
-        ? `/api/communication/${selectedContent.logId}`
-        : '/api/communication';
+      if (!session) {
+        throw new Error("User session is not available.");
+      }
 
-      const res = await fetch(url, {
-        method,
+      // Construct payload and target
+      const payload: any = {
+        title: formData.title,
+        body: formData.body,
+        imageUrl: formData.imageUrl || undefined,
+        data: formData.dataKey && formData.dataValue ? { [formData.dataKey]: formData.dataValue } : undefined,
+        android: {
+          priority: formData.androidPriority,
+          ttl: parseInt(formData.androidTtl) || 3600,
+          channelId: formData.androidChannelId,
+        }
+        
+      };
+
+      const target: any = {
+        type: formData.targetType,
+        token: formData.targetType === 'single' ? formData.token : undefined,
+        tokens:
+          formData.targetType === 'selected' || formData.targetType === 'all'
+            ? formData.tokens
+                .split(',')
+                .map((t) => t.trim())
+                .filter((t) => t)
+            : undefined,
+      };
+
+      // Send notification via API
+      const res = await fetch('/api/communication', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${session?.user.id}`,
+          Authorization: `Bearer ${session.user.id}`,
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ payload, target }),
       });
 
       const result = await res.json();
 
-      if (res.status !== 200 && res.status !== 201) {
-        throw new Error(result.error || "Failed to save content");
+      if (res.status !== 200) {
+        throw new Error(result.error || "Failed to send notification");
       }
 
-      toast.success(`Content ${selectedContent ? 'updated' : 'created'} successfully!`);
+      toast.success("Notification sent successfully!");
       setIsModalOpen(false);
-      setFormData({ subject: '', body: '', isAll: '', });
-      setSelectedContent(null);
-
-      // Refresh data
-      const fetchRes = await fetch('/api/communication', {
-        headers: { Authorization: `Bearer ${session?.user.id}` },
+      setFormData({
+        title: '',
+        body: '',
+        imageUrl: '',
+        dataKey: '',
+        dataValue: '',
+        androidPriority: 'high',
+        androidTtl: '3600',
+        androidChannelId: 'default_channel_id',
+        targetType: 'single',
+        token: '',
+        tokens: '',
       });
-      const newData = await fetchRes.json();
-      setData(newData);
     } catch (error) {
       const { message } = handleError(error, "Communication");
       showErrorToast(message);
     }
   };
 
-  const handleEdit = (content) => {
-    setSelectedContent(content);
-    setFormData({
-      subject: content.subject,
-      body: content.body || '',
-      isAll: content.isAll || '',
-    });
-    setIsModalOpen(true);
-  };
+  if (status === "loading") {
+    return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-base-100 via-base-200 to-base-300">Loading...</div>;
+  }
 
-  const handleDelete = async () => {
-    try {
-      const res = await fetch(`/api/communication/${deleteContentId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${session?.user.id}` },
-      });
-
-      if (res.status !== 200) {
-        throw new Error("Failed to delete content");
-      }
-
-      toast.success("Content deleted successfully!");
-      setIsDeleteModalOpen(false);
-      setDeleteContentId(null);
-
-      // Refresh data
-      const fetchRes = await fetch('/api/communication', {
-        headers: { Authorization: `Bearer ${session?.user.id}` },
-      });
-      const newData = await fetchRes.json();
-      setData(newData);
-    } catch (error) {
-      const { message } = handleError(error, "Content Management");
-      showErrorToast(message);
-    }
-  };
-
-  const handlePageChange = (page:any) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
-
-  // Pagination logic
-  const totalPages = Math.ceil(data.length / rowsPerPage);
-  const startIndex = (currentPage - 1) * rowsPerPage;
-  const endIndex = startIndex + rowsPerPage;
-  const paginatedData = data.slice(startIndex, endIndex);
-
-  // Generate truncated page buttons
-  const getPageNumbers = () => {
-    const maxButtons = 5;
-    const buttons = [];
-    const sideButtons = Math.floor((maxButtons - 3) / 2);
-
-    let startPage = Math.max(2, currentPage - sideButtons);
-    let endPage = Math.min(totalPages - 1, currentPage + sideButtons);
-
-    if (endPage - startPage < maxButtons - 2) {
-      if (currentPage < totalPages / 2) {
-        endPage = Math.min(totalPages - 1, startPage + maxButtons - 2);
-      } else {
-        startPage = Math.max(2, endPage - (maxButtons - 2));
-      }
-    }
-
-    buttons.push(1);
-    if (startPage > 2) buttons.push('...');
-    for (let i = startPage; i <= endPage; i++) buttons.push(i);
-    if (endPage < totalPages - 1) buttons.push('...');
-    if (totalPages > 1) buttons.push(totalPages);
-
-    return buttons;
-  };
-
-  if (error) {
-    return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-base-100 via-base-200 to-base-300 text-error text-lg">Error: {error}</div>;
+  if (status === "unauthenticated") {
+    redirect("/api/auth/signin");
   }
 
   return (
@@ -219,158 +153,183 @@ export default function CommunicationsPage() {
             <div className="card-body">
               <div className="flex justify-between items-center mb-6">
                 <h1 className="btn-shine text-2xl md:text-3xl font-bold capitalize animate-fade-in-down">
-                  Communication
+                  Send Notification
                 </h1>
                 <button
-                  onClick={() => {
-                    setSelectedContent(null);
-                    setFormData({ subject: '', body: '', isAll: '', });
-                    setIsModalOpen(true);
-                  }}
+                  onClick={() => setIsModalOpen(true)}
                   className="btn btn-primary btn-sm rounded-btn bg-gradient-to-r from-primary to-secondary text-primary-content border-none hover:from-primary-focus hover:to-secondary-focus hover:scale-110 transition-all duration-300"
                 >
                   Send
                 </button>
               </div>
-              <div className="divider before:bg-primary after:bg-secondary"></div>
-              <div className="overflow-x-auto">
-                <table className="table w-full bg-base-100 rounded-box shadow-lg">
-                  <thead>
-                    <tr className="text-base-content bg-base-200">
-                      <th className="text-sm md:text-base">Log Id</th>
-                      <th className="text-sm md:text-base">User Id</th>
-                      <th className="text-sm md:text-base">Sent Status</th>
-                      <th className="text-sm md:text-base">Sent At</th>
-                      <th className="text-sm md:text-base">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {paginatedData.map((item) => (
-                      <tr
-                        key={item.logId}
-                        className="hover:bg-gradient-to-r hover:from-primary/10 hover:to-secondary/10 hover:scale-[1.02] transition-all duration-300"
-                      >
-                        <td className="text-sm md:text-base">{item.logId}</td>
-                        <td className="text-sm md:text-base">{item.userId}</td>
-                        <td className="text-sm md:text-base truncate max-w-xs">{item.sentStatus}</td>
-                        <td className="text-sm md:text-base truncate max-w-xs">{item.sentAt}</td>
-                        <td className="text-sm md:text-base">{new Date(item.lastUpdatedAt).toLocaleString()}</td>
-                        <td className="text-sm md:text-base">
-                          <button
-                            onClick={() => handleEdit(item)}
-                            className="btn btn-ghost btn-sm text-primary hover:bg-primary/20 mr-2"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => {
-                              setDeleteContentId(item.logId);
-                              setIsDeleteModalOpen(true);
-                            }}
-                            className="btn btn-ghost btn-sm text-error hover:bg-error/20"
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {/* Pagination Controls */}
-              {totalPages > 1 && (
-                <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4">
-                  <div className="text-sm text-base-content opacity-70">
-                    Showing {startIndex + 1} to {Math.min(endIndex, data.length)} of {data.length} entries
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage === 1}
-                      className="btn btn-sm btn-primary bg-gradient-to-r from-primary to-secondary text-primary-content border-none hover:from-primary-focus hover:to-secondary-focus hover:scale-110 transition-all duration-300 disabled:opacity-50 disabled:hover:scale-100"
-                    >
-                      Previous
-                    </button>
-                    {getPageNumbers().map((page, index) => (
-                      <button
-                        key={index}
-                        onClick={() => typeof page === 'number' && handlePageChange(page)}
-                        className={`btn btn-sm ${
-                          page === currentPage
-                            ? 'btn-active bg-primary text-primary-content'
-                            : typeof page === 'number'
-                            ? 'bg-base-100 text-base-content hover:bg-gradient-to-r hover:from-primary/20 hover:to-secondary/20'
-                            : 'btn-disabled text-base-content/50'
-                        } border-none transition-all duration-300 min-w-[2.5rem]`}
-                        disabled={typeof page !== 'number'}
-                      >
-                        {page}
-                      </button>
-                    ))}
-                    <button
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                      className="btn btn-sm btn-primary bg-gradient-to-r from-primary to-secondary text-primary-content border-none hover:from-primary-focus hover:to-secondary-focus hover:scale-110 transition-all duration-300 disabled:opacity-50 disabled:hover:scale-100"
-                    >
-                      Next
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
-          {/* Edit/Create Modal */}
+          {/* Send Notification Modal */}
           <input type="checkbox" id="content-modal" className="modal-toggle" checked={isModalOpen} onChange={() => setIsModalOpen(!isModalOpen)} />
           <div className="modal">
-            <div className="modal-box bg-base-100">
-              <h3 className="text-lg font-bold">{selectedContent ? 'Edit Content' : 'Send Notification'}</h3>
+            <div className="modal-box bg-base-100 max-w-2xl">
+              <h3 className="text-lg font-bold">Send Notification</h3>
               <form onSubmit={handleSubmit} className="space-y-4 mt-4">
                 <div>
                   <label className="label">
-                    <span className="label-text">Content Type</span>
+                    <span className="label-text">Title</span>
                   </label>
                   <input
                     type="text"
-                    name="contentType"
-                    value={formData.contentType}
+                    name="title"
+                    value={formData.title}
                     onChange={handleInputChange}
                     className="input input-bordered w-full"
                     required
-                    maxLength={50}
+                    maxLength={100}
                   />
                 </div>
                 <div>
                   <label className="label">
-                    <span className="label-text">Content</span>
+                    <span className="label-text">Body</span>
                   </label>
                   <textarea
-                    name="content"
-                    value={formData.content}
+                    name="body"
+                    value={formData.body}
                     onChange={handleInputChange}
                     className="textarea textarea-bordered w-full"
                     rows={4}
+                    required
                   />
                 </div>
                 <div>
                   <label className="label">
-                    <span className="label-text">Image/PDF URL</span>
+                    <span className="label-text">Image URL (optional)</span>
                   </label>
                   <input
                     type="url"
-                    name="imagePdfUrl"
-                    value={formData.imagePdfUrl}
+                    name="imageUrl"
+                    value={formData.imageUrl}
                     onChange={handleInputChange}
                     className="input input-bordered w-full"
                     maxLength={255}
                   />
                 </div>
+                <div>
+                  <label className="label">
+                    <span className="label-text">Data Key (optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="dataKey"
+                    value={formData.dataKey}
+                    onChange={handleInputChange}
+                    className="input input-bordered w-full"
+                    maxLength={50}
+                  />
+                </div>
+                <div>
+                  <label className="label">
+                    <span className="label-text">Data Value (optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="dataValue"
+                    value={formData.dataValue}
+                    onChange={handleInputChange}
+                    className="input input-bordered w-full"
+                    maxLength={100}
+                  />
+                </div>
+                <div>
+                  <label className="label">
+                    <span className="label-text">Android Priority</span>
+                  </label>
+                  <select
+                    name="androidPriority"
+                    value={formData.androidPriority}
+                    onChange={handleInputChange}
+                    className="select select-bordered w-full"
+                  >
+                    <option value="normal">Normal</option>
+                    <option value="high">High</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="label">
+                    <span className="label-text">Android TTL (seconds)</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="androidTtl"
+                    value={formData.androidTtl}
+                    onChange={handleInputChange}
+                    className="input input-bordered w-full"
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <label className="label">
+                    <span className="label-text">Android Channel ID</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="androidChannelId"
+                    value={formData.androidChannelId}
+                    onChange={handleInputChange}
+                    className="input input-bordered w-full"
+                    maxLength={50}
+                  />
+                </div>
+               
+                <div>
+                  <label className="label">
+                    <span className="label-text">Target Type</span>
+                  </label>
+                  <select
+                    name="targetType"
+                    value={formData.targetType}
+                    onChange={handleInputChange}
+                    className="select select-bordered w-full"
+                  >
+                    <option value="single">Single User</option>
+                    <option value="selected">Selected Users</option>
+                    <option value="all">All Users</option>
+                  </select>
+                </div>
+                {formData.targetType === 'single' && (
+                  <div>
+                    <label className="label">
+                      <span className="label-text">FCM Token</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="token"
+                      value={formData.token}
+                      onChange={handleInputChange}
+                      className="input input-bordered w-full"
+                      required
+                      maxLength={255}
+                    />
+                  </div>
+                )}
+                {(formData.targetType === 'selected' || formData.targetType === 'all') && (
+                  <div>
+                    <label className="label">
+                      <span className="label-text">FCM Tokens (comma-separated)</span>
+                    </label>
+                    <textarea
+                      name="tokens"
+                      value={formData.tokens}
+                      onChange={handleInputChange}
+                      className="textarea textarea-bordered w-full"
+                      rows={4}
+                      required
+                    />
+                  </div>
+                )}
                 <div className="modal-action">
                   <button
                     type="submit"
                     className="btn btn-primary bg-gradient-to-r from-primary to-secondary text-primary-content border-none hover:from-primary-focus hover:to-secondary-focus hover:scale-110 transition-all duration-300"
                   >
-                    {selectedContent ? 'Update' : 'Create'}
+                    Send
                   </button>
                   <button
                     type="button"
@@ -381,29 +340,6 @@ export default function CommunicationsPage() {
                   </button>
                 </div>
               </form>
-            </div>
-          </div>
-
-          {/* Delete Confirmation Modal */}
-          <input type="checkbox" id="delete-modal" className="modal-toggle" checked={isDeleteModalOpen} onChange={() => setIsDeleteModalOpen(!isDeleteModalOpen)} />
-          <div className="modal">
-            <div className="modal-box bg-base-100">
-              <h3 className="text-lg font-bold">Confirm Deletion</h3>
-              <p className="py-4">Are you sure you want to delete this content?</p>
-              <div className="modal-action">
-                <button
-                  onClick={handleDelete}
-                  className="btn btn-error bg-gradient-to-r from-error to-error/80 text-error-content border-none hover:from-error/80 hover:to-error hover:scale-110 transition-all duration-300"
-                >
-                  Delete
-                </button>
-                <button
-                  onClick={() => setIsDeleteModalOpen(false)}
-                  className="btn btn-ghost"
-                >
-                  Cancel
-                </button>
-              </div>
             </div>
           </div>
 

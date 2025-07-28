@@ -41,7 +41,7 @@ export async function GET() {
     const newData = await Promise.all(
           data.map(async (data) => {
             const signedUrl = data.imagePdfUrl
-              ? await fileService.generateSignedUrl(data.imagePdfUrl)
+              ? await fileService.generateSignedUrl(`RANJIT/${data.contentType}/${data.imagePdfUrl}`)
               : null;
     
             return {
