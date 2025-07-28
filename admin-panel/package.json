@@ -8,12 +8,14 @@
     "start": "next start",
     "lint": "next lint",
     "docker:build": "docker build -t spacempact/loyalty-panel:stage --platform linux/amd64 .",
-    "docker:push" : "docker push spacempact/loyalty-panel:stage"
+    "docker:push": "docker push spacempact/loyalty-panel:stage"
   },
   "dependencies": {
     "@types/jsonwebtoken": "^9.0.10",
     "autoprefixer": "^10.4.21",
+    "aws-sdk": "2.1692.0",
     "bcryptjs": "^3.0.2",
+    "busboy": "^1.6.0",
     "daisyui": "^5.0.46",
     "dotenv": "^17.0.1",
     "drizzle-orm": "^0.44.2",

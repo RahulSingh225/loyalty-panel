@@ -1,0 +1,81 @@
+import { S3 } from "aws-sdk";
+import { randomUUID } from "crypto";
+
+import stream, { Readable } from "stream";
+import path from "path";
+
+export class FileService {
+  private readonly s3: S3 = new S3({
+    region: process.env.AWS_REGION,
+    accessKeyId: process.env.AWS_ACCESS_KEY,
+    secretAccessKey: process.env.AWS_ACCESS_SECRET,
+  });
+  private readonly bucketName = process.env.AWS_BUCKET;
+
+  async upload(fileBuffer: Buffer, filePath: string) {
+    const params = {
+      Bucket: this.bucketName,
+      Key: filePath,
+      Body: fileBuffer,
+      ContentDisposition: "inline",
+      ContentType: 'image/jpeg',
+    };
+
+    try {
+      const url = await this.s3.upload(params).promise();
+      return url.Key;
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      return "";
+    }
+  }
+
+  generateFilePath(filename: string, tag: string) {
+    let filePath = "";
+    switch (tag) {
+      case "SELFIE":
+        filePath = `csimg/appImages/Profile/${randomUUID()}${path.extname(
+          filename
+        )}`;
+        break;
+      case "CLAIMS":
+        filePath = `RANJIT/PRODUCT_CATALOG/${randomUUID()}${path.extname(
+          filename
+        )}`;
+        break;
+      default:
+        break;
+    }
+    return filePath;
+  }
+
+  async generateSignedUrl(filePath: string) {
+    try {
+      const ext = path.extname(filePath).toLowerCase();
+      let responseContentType = undefined;
+
+      if (ext === ".pdf") {
+        responseContentType = "application/pdf";
+      } else if ([".jpg", ".jpeg", ".png"].includes(ext)) {
+        responseContentType = "image/jpeg";
+      }
+
+      const params: S3.GetObjectRequest & { Expires: number; ResponseContentDisposition?: string; ResponseContentType?: string } = {
+        Bucket: this.bucketName,
+        Key: filePath,
+        Expires: 15 * 60, // 15 minutes
+        ResponseContentDisposition: "inline",
+        ...(responseContentType && { ResponseContentType: responseContentType }),
+      };
+
+      const signedUrl = this.s3.getSignedUrl("getObject", params);
+      return signedUrl;
+    } catch (error) {
+      console.error("Error generating signed URL:", error);
+      return null;
+    }
+  }
+}
+
+
+export const fileService = new FileService()

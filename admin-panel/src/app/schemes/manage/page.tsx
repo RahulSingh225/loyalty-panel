@@ -8,26 +8,24 @@ import { handleError } from "@/utils/errorHandler";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 
-export default function ContentManagementPage() {
+export default function LoyaltySchemesPage() {
   const [data, setData] = useState([]);
   const [error, setError] = useState(null);
   const { data: session, status } = useSession();
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedContent, setSelectedContent] = useState(null);
-  const [deleteContentId, setDeleteContentId] = useState(null);
+  const [selectedScheme, setSelectedScheme] = useState(null);
+  const [deleteSchemeId, setDeleteSchemeId] = useState(null);
+  const [file, setFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
-    contentType: '',
-    content: '',
+    schemeName: '',
+    startDate: '',
+    endDate: '',
+    roles: '',
     imagePdfUrl: '',
   });
-  const [file, setFile] = useState<File | null>(null);
   const rowsPerPage = 10;
-  const contentTypes = [
-    { label: 'PRODUCT_CATALOG', value: 'PRODUCT_CATALOG' },
-    { label: 'BANNER', value: 'BANNER' }
-  ];
 
   useEffect(() => {
     async function fetchData() {
@@ -36,7 +34,7 @@ export default function ContentManagementPage() {
           throw new Error("User session is not available.");
         }
 
-        const res = await fetch('/api/content-management', {
+        const res = await fetch('/api/schemes', {
           headers: {
             Authorization: `Bearer ${session.user.id}`,
           },
@@ -47,9 +45,7 @@ export default function ContentManagementPage() {
         if (res.status !== 200) {
           throw new Error(result.error || "Failed to fetch content");
         }
-
         setData(result);
-        console.log(data, "daaataaa")
       } catch (error) {
         const { message } = handleError(error, "Content Management");
         setError(message);
@@ -64,13 +60,11 @@ export default function ContentManagementPage() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    console.log(name, value,"cdcdscdwecw");
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
-    console.log("sdcdscdc",selectedFile)
     if (selectedFile && (selectedFile.type.startsWith('image/') || selectedFile.type === 'application/pdf')) {
       setFile(selectedFile);
       setFormData((prev) => ({ ...prev, imagePdfUrl: '' }));
@@ -83,30 +77,28 @@ export default function ContentManagementPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const method = selectedContent ? 'PUT' : 'POST';
-      const url = selectedContent
-        ? `/api/content-management/${selectedContent.contentId}`
-        : '/api/content-management';
+      const method = selectedScheme ? 'PUT' : 'POST';
+      const url = selectedScheme
+        ? `/api/schemes/${selectedScheme.schemeId}`
+        : '/api/schemes';
 
-      const formDataToSend = new FormData();
-      formDataToSend.append('contentType', formData.contentType);
-      formDataToSend.append('content', formData.content);
-      formDataToSend.append('file', file as any);
+
+      const form = new FormData();
+      form.append('schemeName', formData.schemeName);
+      form.append('startDate', formData.startDate);
+      form.append('endDate', formData.endDate);
+      form.append('roles', formData.roles);
+
+      // Attach file if present
       if (file) {
-        console.log("file")
-        formDataToSend.append('file', file);
-      } else if (formData.imagePdfUrl) {
-        console.log("fileURl")
-        formDataToSend.append('imagePdfUrl', formData.imagePdfUrl);
+        form.append('file', file);
       }
-
       const res = await fetch(url, {
         method,
         headers: {
           Authorization: `Bearer ${session.user.id}`,
-          // 'Content-Type': "multipart/form-data",
         },
-        body: formDataToSend,
+        body: form,
       });
 
       const result = await res.json();
@@ -115,38 +107,40 @@ export default function ContentManagementPage() {
         throw new Error(result.error || "Failed to save content");
       }
 
-      toast.success(`Content ${selectedContent ? 'updated' : 'created'} successfully!`);
+      toast.success(`Content ${selectedScheme ? 'updated' : 'created'} successfully!`);
       setIsModalOpen(false);
-      setFormData({ contentType: '', content: '', imagePdfUrl: '' });
-      setFile(null);
-      setSelectedContent(null);
+      setFormData((prev) => ({ ...prev, startDate: '', endDate: '', roles: '', imagePdfUrl: '', schemeName: '' }));
+      setSelectedScheme(null);
 
       // Refresh data
-      const fetchRes = await fetch('/api/content-management', {
+      const fetchRes = await fetch('/api/schemes', {
         headers: { Authorization: `Bearer ${session.user.id}` },
       });
       const newData = await fetchRes.json();
       setData(newData);
     } catch (error) {
-      const { message } = handleError(error, "Content Management");
+      const { message } = handleError(error, "Scheme Management");
       showErrorToast(message);
     }
   };
 
-  const handleEdit = (content) => {
-    setSelectedContent(content);
-    setFormData({
-      contentType: content.contentType,
-      content: content.content || '',
+  const handleEdit = (content: any) => {
+    setSelectedScheme(content);
+    setFormData((prev) => ({
+      ...prev,
+      startDate: content.startDate,
+      endDate: content.endDate || '',
       imagePdfUrl: content.imagePdfUrl || '',
-    });
-    setFile(null);
+      roles: content.roles || '',
+      schemeName: content.schemeName || ''
+    }));
+
     setIsModalOpen(true);
   };
 
   const handleDelete = async () => {
     try {
-      const res = await fetch(`/api/content-management/${deleteContentId}`, {
+      const res = await fetch(`/api/schemes/${deleteSchemeId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${session.user.id}` },
       });
@@ -157,16 +151,16 @@ export default function ContentManagementPage() {
 
       toast.success("Content deleted successfully!");
       setIsDeleteModalOpen(false);
-      setDeleteContentId(null);
+      setDeleteSchemeId(null);
 
       // Refresh data
-      const fetchRes = await fetch('/api/content-management', {
-        headers: { Authorization: `Bearer ${session.user.id}` },
+      const fetchRes = await fetch('/api/schemes', {
+        headers: { Authorization: `Bearer ${session?.user?.id}` },
       });
       const newData = await fetchRes.json();
       setData(newData);
     } catch (error) {
-      const { message } = handleError(error, "Content Management");
+      const { message } = handleError(error, "Schemes");
       showErrorToast(message);
     }
   };
@@ -202,7 +196,7 @@ export default function ContentManagementPage() {
 
     buttons.push(1);
     if (startPage > 2) buttons.push('...');
-    for (let i = startPage; i <= endPage; i++) buttons.push(i);
+    for (let i = startPage; i <= endPage; i++) buttons.push(i)
     if (endPage < totalPages - 1) buttons.push('...');
     if (totalPages > 1) buttons.push(totalPages);
 
@@ -252,18 +246,17 @@ export default function ContentManagementPage() {
             <div className="card-body">
               <div className="flex justify-between items-center mb-6">
                 <h1 className="btn-shine text-2xl md:text-3xl font-bold capitalize animate-fade-in-down">
-                  Content Management
+                  Loyalty Schemes
                 </h1>
                 <button
                   onClick={() => {
-                    setSelectedContent(null);
-                    setFormData({ contentType: '', content: '', imagePdfUrl: '' });
-                    setFile(null);
+                    setSelectedScheme(null);
+                    setFormData((prev) => ({ ...prev, startDate: '', endDate: '', roles: '', imagePdfUrl: '', schemeName: '' }));
                     setIsModalOpen(true);
                   }}
                   className="btn btn-primary btn-sm rounded-btn bg-gradient-to-r from-primary to-secondary text-primary-content border-none hover:from-primary-focus hover:to-secondary-focus hover:scale-110 transition-all duration-300"
                 >
-                  Add Content
+                  Add Scheme
                 </button>
               </div>
               <div className="divider before:bg-primary after:bg-secondary"></div>
@@ -271,30 +264,36 @@ export default function ContentManagementPage() {
                 <table className="table w-full bg-base-100 rounded-box shadow-lg">
                   <thead>
                     <tr className="text-base-content bg-base-200">
-                      <th className="text-sm md:text-base">ID</th>
-                      <th className="text-sm md:text-base">Content Type</th>
-                      <th className="text-sm md:text-base">Content</th>
+                      <th className="text-sm md:text-base">Scheme ID</th>
+                      <th className="text-sm md:text-base">Scheme Name</th>
+                      <th className="text-sm md:text-base">Active</th>
                       <th className="text-sm md:text-base">Image/PDF URL</th>
-                      <th className="text-sm md:text-base">Last Updated</th>
-                      {/* <th className="text-sm md:text-base">Actions</th> */}
+                      <th className="text-sm md:text-base">Roles</th>
+                      <th className="text-sm md:text-base">Start Date</th>
+                      <th className="text-sm md:text-base">End Date</th>
+                      <th className="text-sm md:text-base">Created At</th>
+                      {/* <th className="text-sm md:text-base">Action</th> */}
                     </tr>
                   </thead>
                   <tbody>
                     {paginatedData.map((item) => (
                       <tr
-                        key={item.contentId}
+                        key={item.schemeId}
                         className="hover:bg-gradient-to-r hover:from-primary/10 hover:to-secondary/10 hover:scale-[1.02] transition-all duration-300"
                       >
-                        <td className="text-sm md:text-base">{item.contentId}</td>
-                        <td className="text-sm md:text-base">{item.contentType}</td>
-                        <td className="text-sm md:text-base truncate max-w-xs">{item.content || '-'}</td>
+                        <td className="text-sm md:text-base">{item.schemeId}</td>
+                        <td className="text-sm md:text-base">{item.schemeName}</td>
+                        <td className="text-sm md:text-base">{item.isActive}</td>
                         <td className="text-sm md:text-base truncate max-w-xs">
-                          {item.contentResourceUrl ? (
-                            <a href={item.contentResourceUrl} target="_blank" rel="noopener noreferrer" className="link link-primary">
+                          {item.schemeResourceUrl ? (
+                            <a href={item.schemeResourceUrl} target="_blank" rel="noopener noreferrer" className="link link-primary">
                               View
                             </a>
                           ) : '-'}
                         </td>
+                        <td className="text-sm md:text-base">{item.applicableRoles}</td>
+                        <td className="text-sm md:text-base">{item.startDate}</td>
+                        <td className="text-sm md:text-base">{item.endDate}</td>
                         <td className="text-sm md:text-base">{new Date(item.lastUpdatedAt).toLocaleString()}</td>
                         {/* <td className="text-sm md:text-base">
                           <button
@@ -305,7 +304,7 @@ export default function ContentManagementPage() {
                           </button>
                           <button
                             onClick={() => {
-                              setDeleteContentId(item.contentId);
+                              setDeleteSchemeId(item.schemeId);
                               setIsDeleteModalOpen(true);
                             }}
                             className="btn btn-ghost btn-sm text-error hover:bg-error/20"
@@ -320,7 +319,7 @@ export default function ContentManagementPage() {
               </div>
               {/* Pagination Controls */}
               {totalPages > 1 && (
-                <div className="flex flex-col sm:flex-row justify_between items_center mt_6 gap_4">
+                <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4">
                   <div className="text-sm text-base-content opacity-70">
                     Showing {startIndex + 1} to {Math.min(endIndex, data.length)} of {data.length} entries
                   </div>
@@ -337,10 +336,10 @@ export default function ContentManagementPage() {
                         key={index}
                         onClick={() => typeof page === 'number' && handlePageChange(page)}
                         className={`btn btn-sm ${page === currentPage
-                            ? 'btn-active bg-primary text-primary-content'
-                            : typeof page === 'number'
-                              ? 'bg-base-100 text-base-content hover:bg-gradient-to-r hover:from-primary/20 hover:to-secondary/20'
-                              : 'btn-disabled text-base-content/50'
+                          ? 'btn-active bg-primary text-primary-content'
+                          : typeof page === 'number'
+                            ? 'bg-base-100 text-base-content hover:bg-gradient-to-r hover:from-primary/20 hover:to-secondary/20'
+                            : 'btn-disabled text-base-content/50'
                           } border-none transition-all duration-300 min-w-[2.5rem]`}
                         disabled={typeof page !== 'number'}
                       >
@@ -364,44 +363,48 @@ export default function ContentManagementPage() {
           <input type="checkbox" id="content-modal" className="modal-toggle" checked={isModalOpen} onChange={() => setIsModalOpen(!isModalOpen)} />
           <div className="modal">
             <div className="modal-box bg-base-100">
-              <h3 className="text-lg font-bold">{selectedContent ? 'Edit Content' : 'Add Content'}</h3>
+              <h3 className="text-lg font-bold">{selectedScheme ? 'Edit Scheme' : 'Add Scheme'}</h3>
               <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+
+
+                {/* Scheme Name */}
                 <div>
                   <label className="label">
-                    <span className="label-text">Content Name</span>
+                    <span className="label-text">Scheme Name</span>
                   </label>
                   <input
                     type="text"
-                    name="content"
-                    value={formData.content}
+                    name="schemeName"
+                    value={formData.schemeName}
                     onChange={handleInputChange}
                     className="input input-bordered w-full"
                     required
                     maxLength={50}
                   />
                 </div>
-                <div className="form-control">
+                {/* Target Audience Dropdown */}
+                <div>
                   <label className="label">
-                    <span className="label-text">Content Type</span>
+                    <span className="label-text">Roles</span>
                   </label>
                   <select
-                    name="contentType"
+                    name="roles"
+                    value={formData.roles}
+                    onChange={handleInputChange}
                     className="select select-bordered w-full"
-                    value={formData.contentType}
-                    onChange={handleInputChange} // Use your normal handler
                     required
                   >
-                    <option value="" disabled>Select content type</option>
-                    {contentTypes.map((type) => (
-                      <option key={type.label} value={type.value}>
-                        {type.label}
-                      </option>
-                    ))}
+                    <option value="">Select</option>
+                    <option value="1">Sales</option>
+                    <option value="2">Distributor</option>
+                    <option value="3">Retailer</option>
                   </select>
                 </div>
-                <div className="form-control">
+
+                {/* Image/PDF URL */}
+                <div>
                   <label className="label">
-                    <span className="label-text">Image/PDF</span>
+                    <span className="label-text">Image/PDF URL</span>
                   </label>
                   <input
                     type="file"
@@ -409,29 +412,60 @@ export default function ContentManagementPage() {
                     accept="image/*,application/pdf"
                     onChange={handleFileChange}
                   />
-                  {file && (
-                    <p className="mt-2 text-sm text-gray-600">
-                      Selected: {file.name}
-                    </p>
-                  )}
-                  {formData.imagePdfUrl && !file && (
-                    <p className="mt-2 text-sm text-gray-600">
-                      Current URL: <a href={formData.imagePdfUrl} target="_blank" rel="noopener noreferrer" className="link link-primary">View</a>
-                    </p>
-                  )}
                 </div>
+
+                {/* Start Date */}
+                <div>
+                  <label className="label">
+                    <span className="label-text">Start Date</span>
+                  </label>
+                  <input
+                    type="date"
+                    name="startDate"
+                    value={formData.startDate}
+                    onChange={handleInputChange}
+                    className="input input-bordered w-full"
+                    required
+                  />
+                </div>
+
+                {/* End Date */}
+                <div>
+                  <label className="label">
+                    <span className="label-text">End Date</span>
+                  </label>
+                  <input
+                    type="date"
+                    name="endDate"
+                    value={formData.endDate}
+                    onChange={handleInputChange}
+                    className="input input-bordered w-full"
+                    required
+                  />
+                </div>
+
+                {/* Modal Actions */}
                 <div className="modal-action">
                   <button
                     type="submit"
                     className="btn btn-primary bg-gradient-to-r from-primary to-secondary text-primary-content border-none hover:from-primary-focus hover:to-secondary-focus hover:scale-110 transition-all duration-300"
                   >
-                    {selectedContent ? 'Update' : 'Create'}
+                    {selectedScheme ? 'Update' : 'Create'}
                   </button>
                   <button
                     type="button"
+                    // onClick={() => setIsModalOpen(false)}
                     onClick={() => {
                       setIsModalOpen(false);
                       setFile(null);
+                      setFormData({
+                        schemeName: '',
+                        startDate: '',
+                        endDate: '',
+                        roles: '',
+                        imagePdfUrl: '',
+                      });
+                      setSelectedScheme(null);
                     }}
                     className="btn btn-ghost"
                   >
@@ -441,6 +475,7 @@ export default function ContentManagementPage() {
               </form>
             </div>
           </div>
+
 
           {/* Delete Confirmation Modal */}
           <input type="checkbox" id="delete-modal" className="modal-toggle" checked={isDeleteModalOpen} onChange={() => setIsDeleteModalOpen(!isDeleteModalOpen)} />

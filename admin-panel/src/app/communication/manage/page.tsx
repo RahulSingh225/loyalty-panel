@@ -8,7 +8,7 @@ import { handleError } from "@/utils/errorHandler";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 
-export default function ContentManagementPage() {
+export default function CommunicationsPage() {
   const [data, setData] = useState([]);
   const [error, setError] = useState(null);
   const { data: session, status } = useSession();
@@ -18,16 +18,11 @@ export default function ContentManagementPage() {
   const [selectedContent, setSelectedContent] = useState(null);
   const [deleteContentId, setDeleteContentId] = useState(null);
   const [formData, setFormData] = useState({
-    contentType: '',
-    content: '',
-    imagePdfUrl: '',
+    subject: '',
+    body: '',
+    isAll: '',
   });
-  const [file, setFile] = useState<File | null>(null);
   const rowsPerPage = 10;
-  const contentTypes = [
-    { label: 'PRODUCT_CATALOG', value: 'PRODUCT_CATALOG' },
-    { label: 'BANNER', value: 'BANNER' }
-  ];
 
   useEffect(() => {
     async function fetchData() {
@@ -36,7 +31,7 @@ export default function ContentManagementPage() {
           throw new Error("User session is not available.");
         }
 
-        const res = await fetch('/api/content-management', {
+        const res = await fetch('/api/communication', {
           headers: {
             Authorization: `Bearer ${session.user.id}`,
           },
@@ -49,9 +44,8 @@ export default function ContentManagementPage() {
         }
 
         setData(result);
-        console.log(data, "daaataaa")
       } catch (error) {
-        const { message } = handleError(error, "Content Management");
+        const { message } = handleError(error, "Communication");
         setError(message);
         showErrorToast(message);
       }
@@ -62,22 +56,9 @@ export default function ContentManagementPage() {
     }
   }, [session]);
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e:any) => {
     const { name, value } = e.target;
-    console.log(name, value,"cdcdscdwecw");
     setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    console.log("sdcdscdc",selectedFile)
-    if (selectedFile && (selectedFile.type.startsWith('image/') || selectedFile.type === 'application/pdf')) {
-      setFile(selectedFile);
-      setFormData((prev) => ({ ...prev, imagePdfUrl: '' }));
-    } else {
-      showErrorToast('Please select an image or PDF file');
-      setFile(null);
-    }
   };
 
   const handleSubmit = async (e) => {
@@ -85,28 +66,16 @@ export default function ContentManagementPage() {
     try {
       const method = selectedContent ? 'PUT' : 'POST';
       const url = selectedContent
-        ? `/api/content-management/${selectedContent.contentId}`
-        : '/api/content-management';
-
-      const formDataToSend = new FormData();
-      formDataToSend.append('contentType', formData.contentType);
-      formDataToSend.append('content', formData.content);
-      formDataToSend.append('file', file as any);
-      if (file) {
-        console.log("file")
-        formDataToSend.append('file', file);
-      } else if (formData.imagePdfUrl) {
-        console.log("fileURl")
-        formDataToSend.append('imagePdfUrl', formData.imagePdfUrl);
-      }
+        ? `/api/communication/${selectedContent.logId}`
+        : '/api/communication';
 
       const res = await fetch(url, {
         method,
         headers: {
-          Authorization: `Bearer ${session.user.id}`,
-          // 'Content-Type': "multipart/form-data",
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session?.user.id}`,
         },
-        body: formDataToSend,
+        body: JSON.stringify(formData),
       });
 
       const result = await res.json();
@@ -117,18 +86,17 @@ export default function ContentManagementPage() {
 
       toast.success(`Content ${selectedContent ? 'updated' : 'created'} successfully!`);
       setIsModalOpen(false);
-      setFormData({ contentType: '', content: '', imagePdfUrl: '' });
-      setFile(null);
+      setFormData({ subject: '', body: '', isAll: '', });
       setSelectedContent(null);
 
       // Refresh data
-      const fetchRes = await fetch('/api/content-management', {
-        headers: { Authorization: `Bearer ${session.user.id}` },
+      const fetchRes = await fetch('/api/communication', {
+        headers: { Authorization: `Bearer ${session?.user.id}` },
       });
       const newData = await fetchRes.json();
       setData(newData);
     } catch (error) {
-      const { message } = handleError(error, "Content Management");
+      const { message } = handleError(error, "Communication");
       showErrorToast(message);
     }
   };
@@ -136,19 +104,18 @@ export default function ContentManagementPage() {
   const handleEdit = (content) => {
     setSelectedContent(content);
     setFormData({
-      contentType: content.contentType,
-      content: content.content || '',
-      imagePdfUrl: content.imagePdfUrl || '',
+      subject: content.subject,
+      body: content.body || '',
+      isAll: content.isAll || '',
     });
-    setFile(null);
     setIsModalOpen(true);
   };
 
   const handleDelete = async () => {
     try {
-      const res = await fetch(`/api/content-management/${deleteContentId}`, {
+      const res = await fetch(`/api/communication/${deleteContentId}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${session.user.id}` },
+        headers: { Authorization: `Bearer ${session?.user.id}` },
       });
 
       if (res.status !== 200) {
@@ -160,8 +127,8 @@ export default function ContentManagementPage() {
       setDeleteContentId(null);
 
       // Refresh data
-      const fetchRes = await fetch('/api/content-management', {
-        headers: { Authorization: `Bearer ${session.user.id}` },
+      const fetchRes = await fetch('/api/communication', {
+        headers: { Authorization: `Bearer ${session?.user.id}` },
       });
       const newData = await fetchRes.json();
       setData(newData);
@@ -171,7 +138,7 @@ export default function ContentManagementPage() {
     }
   };
 
-  const handlePageChange = (page) => {
+  const handlePageChange = (page:any) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
     }
@@ -252,18 +219,17 @@ export default function ContentManagementPage() {
             <div className="card-body">
               <div className="flex justify-between items-center mb-6">
                 <h1 className="btn-shine text-2xl md:text-3xl font-bold capitalize animate-fade-in-down">
-                  Content Management
+                  Communication
                 </h1>
                 <button
                   onClick={() => {
                     setSelectedContent(null);
-                    setFormData({ contentType: '', content: '', imagePdfUrl: '' });
-                    setFile(null);
+                    setFormData({ subject: '', body: '', isAll: '', });
                     setIsModalOpen(true);
                   }}
                   className="btn btn-primary btn-sm rounded-btn bg-gradient-to-r from-primary to-secondary text-primary-content border-none hover:from-primary-focus hover:to-secondary-focus hover:scale-110 transition-all duration-300"
                 >
-                  Add Content
+                  Send
                 </button>
               </div>
               <div className="divider before:bg-primary after:bg-secondary"></div>
@@ -271,32 +237,25 @@ export default function ContentManagementPage() {
                 <table className="table w-full bg-base-100 rounded-box shadow-lg">
                   <thead>
                     <tr className="text-base-content bg-base-200">
-                      <th className="text-sm md:text-base">ID</th>
-                      <th className="text-sm md:text-base">Content Type</th>
-                      <th className="text-sm md:text-base">Content</th>
-                      <th className="text-sm md:text-base">Image/PDF URL</th>
-                      <th className="text-sm md:text-base">Last Updated</th>
-                      {/* <th className="text-sm md:text-base">Actions</th> */}
+                      <th className="text-sm md:text-base">Log Id</th>
+                      <th className="text-sm md:text-base">User Id</th>
+                      <th className="text-sm md:text-base">Sent Status</th>
+                      <th className="text-sm md:text-base">Sent At</th>
+                      <th className="text-sm md:text-base">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {paginatedData.map((item) => (
                       <tr
-                        key={item.contentId}
+                        key={item.logId}
                         className="hover:bg-gradient-to-r hover:from-primary/10 hover:to-secondary/10 hover:scale-[1.02] transition-all duration-300"
                       >
-                        <td className="text-sm md:text-base">{item.contentId}</td>
-                        <td className="text-sm md:text-base">{item.contentType}</td>
-                        <td className="text-sm md:text-base truncate max-w-xs">{item.content || '-'}</td>
-                        <td className="text-sm md:text-base truncate max-w-xs">
-                          {item.contentResourceUrl ? (
-                            <a href={item.contentResourceUrl} target="_blank" rel="noopener noreferrer" className="link link-primary">
-                              View
-                            </a>
-                          ) : '-'}
-                        </td>
+                        <td className="text-sm md:text-base">{item.logId}</td>
+                        <td className="text-sm md:text-base">{item.userId}</td>
+                        <td className="text-sm md:text-base truncate max-w-xs">{item.sentStatus}</td>
+                        <td className="text-sm md:text-base truncate max-w-xs">{item.sentAt}</td>
                         <td className="text-sm md:text-base">{new Date(item.lastUpdatedAt).toLocaleString()}</td>
-                        {/* <td className="text-sm md:text-base">
+                        <td className="text-sm md:text-base">
                           <button
                             onClick={() => handleEdit(item)}
                             className="btn btn-ghost btn-sm text-primary hover:bg-primary/20 mr-2"
@@ -305,14 +264,14 @@ export default function ContentManagementPage() {
                           </button>
                           <button
                             onClick={() => {
-                              setDeleteContentId(item.contentId);
+                              setDeleteContentId(item.logId);
                               setIsDeleteModalOpen(true);
                             }}
                             className="btn btn-ghost btn-sm text-error hover:bg-error/20"
                           >
                             Delete
                           </button>
-                        </td> */}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -320,7 +279,7 @@ export default function ContentManagementPage() {
               </div>
               {/* Pagination Controls */}
               {totalPages > 1 && (
-                <div className="flex flex-col sm:flex-row justify_between items_center mt_6 gap_4">
+                <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4">
                   <div className="text-sm text-base-content opacity-70">
                     Showing {startIndex + 1} to {Math.min(endIndex, data.length)} of {data.length} entries
                   </div>
@@ -336,12 +295,13 @@ export default function ContentManagementPage() {
                       <button
                         key={index}
                         onClick={() => typeof page === 'number' && handlePageChange(page)}
-                        className={`btn btn-sm ${page === currentPage
+                        className={`btn btn-sm ${
+                          page === currentPage
                             ? 'btn-active bg-primary text-primary-content'
                             : typeof page === 'number'
-                              ? 'bg-base-100 text-base-content hover:bg-gradient-to-r hover:from-primary/20 hover:to-secondary/20'
-                              : 'btn-disabled text-base-content/50'
-                          } border-none transition-all duration-300 min-w-[2.5rem]`}
+                            ? 'bg-base-100 text-base-content hover:bg-gradient-to-r hover:from-primary/20 hover:to-secondary/20'
+                            : 'btn-disabled text-base-content/50'
+                        } border-none transition-all duration-300 min-w-[2.5rem]`}
                         disabled={typeof page !== 'number'}
                       >
                         {page}
@@ -364,61 +324,46 @@ export default function ContentManagementPage() {
           <input type="checkbox" id="content-modal" className="modal-toggle" checked={isModalOpen} onChange={() => setIsModalOpen(!isModalOpen)} />
           <div className="modal">
             <div className="modal-box bg-base-100">
-              <h3 className="text-lg font-bold">{selectedContent ? 'Edit Content' : 'Add Content'}</h3>
+              <h3 className="text-lg font-bold">{selectedContent ? 'Edit Content' : 'Send Notification'}</h3>
               <form onSubmit={handleSubmit} className="space-y-4 mt-4">
                 <div>
                   <label className="label">
-                    <span className="label-text">Content Name</span>
+                    <span className="label-text">Content Type</span>
                   </label>
                   <input
                     type="text"
-                    name="content"
-                    value={formData.content}
+                    name="contentType"
+                    value={formData.contentType}
                     onChange={handleInputChange}
                     className="input input-bordered w-full"
                     required
                     maxLength={50}
                   />
                 </div>
-                <div className="form-control">
+                <div>
                   <label className="label">
-                    <span className="label-text">Content Type</span>
+                    <span className="label-text">Content</span>
                   </label>
-                  <select
-                    name="contentType"
-                    className="select select-bordered w-full"
-                    value={formData.contentType}
-                    onChange={handleInputChange} // Use your normal handler
-                    required
-                  >
-                    <option value="" disabled>Select content type</option>
-                    {contentTypes.map((type) => (
-                      <option key={type.label} value={type.value}>
-                        {type.label}
-                      </option>
-                    ))}
-                  </select>
+                  <textarea
+                    name="content"
+                    value={formData.content}
+                    onChange={handleInputChange}
+                    className="textarea textarea-bordered w-full"
+                    rows={4}
+                  />
                 </div>
-                <div className="form-control">
+                <div>
                   <label className="label">
-                    <span className="label-text">Image/PDF</span>
+                    <span className="label-text">Image/PDF URL</span>
                   </label>
                   <input
-                    type="file"
-                    className="file-input file-input-bordered w-full"
-                    accept="image/*,application/pdf"
-                    onChange={handleFileChange}
+                    type="url"
+                    name="imagePdfUrl"
+                    value={formData.imagePdfUrl}
+                    onChange={handleInputChange}
+                    className="input input-bordered w-full"
+                    maxLength={255}
                   />
-                  {file && (
-                    <p className="mt-2 text-sm text-gray-600">
-                      Selected: {file.name}
-                    </p>
-                  )}
-                  {formData.imagePdfUrl && !file && (
-                    <p className="mt-2 text-sm text-gray-600">
-                      Current URL: <a href={formData.imagePdfUrl} target="_blank" rel="noopener noreferrer" className="link link-primary">View</a>
-                    </p>
-                  )}
                 </div>
                 <div className="modal-action">
                   <button
@@ -429,10 +374,7 @@ export default function ContentManagementPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => {
-                      setIsModalOpen(false);
-                      setFile(null);
-                    }}
+                    onClick={() => setIsModalOpen(false)}
                     className="btn btn-ghost"
                   >
                     Cancel
