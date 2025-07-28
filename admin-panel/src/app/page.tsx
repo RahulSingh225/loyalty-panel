@@ -4,7 +4,7 @@ export default function Home() {
  return (
  
 
-  <div aria-label="Orange and tan hamster running in a metal wheel" role="img" className="wheel-and-hamster">
+  <div aria-label="Orange and tan hamster running in a metal wheel" role="img" className="wheel-and-hamster w-full self-center-safe h-full snap-center ">
     <div className="wheel"></div>
     <div className="hamster">
       <div className="hamster__body">

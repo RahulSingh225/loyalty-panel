@@ -1,7 +1,7 @@
 const Loader: React.FC = () => {
   return (
  
-<body className="bg-gray-100 flex items-center justify-center min-h-screen">
+
   <div aria-label="Orange and tan hamster running in a metal wheel" role="img" className="wheel-and-hamster">
     <div className="wheel"></div>
     <div className="hamster">
@@ -20,7 +20,7 @@ const Loader: React.FC = () => {
     </div>
     <div className="spoke"></div>
   </div>
-</body>
+
   );
 };
 
