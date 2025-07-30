@@ -20,9 +20,8 @@ export default function CommunicationsPage() {
     androidPriority: 'high' as 'normal' | 'high',
     androidTtl: '3600',
     androidChannelId: 'default_channel_id',
-    targetType: 'single' as 'single' | 'selected' | 'all',
-    token: '',
-    tokens: '',
+    targetType: 'single' as 'single' | 'selected' | 'all'
+    
   });
 
   // Handle input changes
@@ -59,14 +58,6 @@ export default function CommunicationsPage() {
 
       const target: any = {
         type: formData.targetType,
-        token: formData.targetType === 'single' ? formData.token : undefined,
-        tokens:
-          formData.targetType === 'selected' || formData.targetType === 'all'
-            ? formData.tokens
-                .split(',')
-                .map((t) => t.trim())
-                .filter((t) => t)
-            : undefined,
       };
 
       // Send notification via API
@@ -97,8 +88,7 @@ export default function CommunicationsPage() {
         androidTtl: '3600',
         androidChannelId: 'default_channel_id',
         targetType: 'single',
-        token: '',
-        tokens: '',
+        
       });
     } catch (error) {
       const { message } = handleError(error, "Communication");
@@ -288,42 +278,14 @@ export default function CommunicationsPage() {
                     onChange={handleInputChange}
                     className="select select-bordered w-full"
                   >
-                    <option value="single">Single User</option>
-                    <option value="selected">Selected Users</option>
+                    
                     <option value="all">All Users</option>
+                    <option value="retailer">All Retailers</option>
+                    <option value="distributor">All Agents</option>
+                    <option value="sales">All Sales</option>
                   </select>
                 </div>
-                {formData.targetType === 'single' && (
-                  <div>
-                    <label className="label">
-                      <span className="label-text">FCM Token</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="token"
-                      value={formData.token}
-                      onChange={handleInputChange}
-                      className="input input-bordered w-full"
-                      required
-                      maxLength={255}
-                    />
-                  </div>
-                )}
-                {(formData.targetType === 'selected' || formData.targetType === 'all') && (
-                  <div>
-                    <label className="label">
-                      <span className="label-text">FCM Tokens (comma-separated)</span>
-                    </label>
-                    <textarea
-                      name="tokens"
-                      value={formData.tokens}
-                      onChange={handleInputChange}
-                      className="textarea textarea-bordered w-full"
-                      rows={4}
-                      required
-                    />
-                  </div>
-                )}
+                
                 <div className="modal-action">
                   <button
                     type="submit"

@@ -31,6 +31,7 @@ let data;
   }
     return NextResponse.json(data);
  } catch (error) {
+  console.error('Error fetching user list:', error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 

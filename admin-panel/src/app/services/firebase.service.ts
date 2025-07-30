@@ -139,7 +139,7 @@ class FirebaseService {
       for (let i = 0; i < tokens.length; i += batchSize) {
         const batchTokens = tokens.slice(i, i + batchSize);
         const batchMessage = { ...message, tokens: batchTokens };
-        const response = await admin.messaging().sendMulticast(batchMessage);
+        const response = await admin.messaging().sendEachForMulticast(batchMessage);
 
         // Handle response
         console.log(`Successfully sent to ${response.successCount} devices`);

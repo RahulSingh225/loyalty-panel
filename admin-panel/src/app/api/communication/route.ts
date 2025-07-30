@@ -1,6 +1,7 @@
+import { firebaseService } from '@/app/services/firebase.service';
 import { auth } from '@/auth';
 import { db } from '@/db';
-import { notificationLog } from '@/db/schema';
+import { notificationLog, userMaster } from '@/db/schema';
 import { desc, eq, max } from "drizzle-orm";
 import moment from 'moment';
 import { NextRequest, NextResponse } from 'next/server';
@@ -53,27 +54,44 @@ export async function POST(req: NextRequest) {
 
         const body = await req.json();
         console.log(body)
+        let tokens;
+        
+        switch (body.target.type) {
+            case 'retailer':
+                 tokens = await db.select({ tokens: userMaster.fcmToken }).from(userMaster).where(eq(userMaster.userType, 'retailer'));
+                 tokens = tokens.map((item) => item.tokens);
+                 console.log(tokens, "tokens")
+                            await firebaseService.sendNotification(body.payload,{ tokens:tokens,type:'all' })
+                break;
+         case 'distributor':
+              tokens = await db.select({ tokens: userMaster.fcmToken }).from(userMaster).where(eq(userMaster.userType, 'distributor'));
+                               tokens = tokens.map((item) => item.tokens);
+                              await firebaseService.sendNotification(body.payload,{ tokens:tokens,type:'all' })
+
+                break;
+
+                 case 'sales':
+               tokens = await db.select({ tokens: userMaster.fcmToken }).from(userMaster).where(eq(userMaster.userType, 'sales'));
+                                tokens = tokens.map((item) => item.tokens);
+                               await firebaseService.sendNotification(body.payload,{ tokens:tokens,type:'all' })
+
+                break;
+                case 'all':
+                   tokens = await db.select({ tokens: userMaster.fcmToken }).from(userMaster);
+                                    tokens = tokens.map((item) => item.tokens);
+                                   await firebaseService.sendNotification(body.payload,{ tokens:tokens,type:'all' })
+
+                   break;
+            case 'single':
+                break;
+            default:
+                break;
+        }
+
+        
+
 return NextResponse.json({ message: "success" });
-        await db.transaction(async (tran) => {
-            const [maxIdResult] = await tran
-                .select({ maxId: max(notificationLog.logId) })
-                .from(notificationLog);
-
-            const nextSchemeId = (maxIdResult?.maxId ?? 0) + 1;
-
-            // Step 2: Insert the new scheme
-            await tran.insert(notificationLog).values({
-                logId: body?.logId,
-                userId: body?.schemeName,
-                templateId: body?.startDate,
-                channelUsed: body?.endDate,
-                messageContent: '', 
-                sentStatus: [body.roles],
-                sentAt: true,
-                responseData
-            });
-        })
-
+        
         return NextResponse.json({ message: "success" });
     } catch (error) {
         console.log(error, "eroro")
