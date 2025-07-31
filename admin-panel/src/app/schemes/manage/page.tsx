@@ -1,11 +1,11 @@
 'use client';
 
-import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
-import { useEffect, useState } from "react";
-import { showErrorToast } from "@/components/toastProvider";
-import { handleError } from "@/utils/errorHandler";
-import { ToastContainer, toast } from "react-toastify";
+import { useSession } from 'next-auth/react';
+import { redirect } from 'next/navigation';
+import { useEffect, useState, useRef } from 'react';
+import { showErrorToast } from '@/components/toastProvider';
+import { handleError } from '@/utils/errorHandler';
+import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 export default function LoyaltySchemesPage() {
@@ -17,7 +17,8 @@ export default function LoyaltySchemesPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedScheme, setSelectedScheme] = useState(null);
   const [deleteSchemeId, setDeleteSchemeId] = useState(null);
-  const [file, setFile] = useState<File | null>(null);
+  const [file, setFile] = useState(null);
+  const [previewFile, setPreviewFile] = useState(null); // Added for schemePreview file
   const [formData, setFormData] = useState({
     schemeName: '',
     startDate: '',
@@ -25,13 +26,15 @@ export default function LoyaltySchemesPage() {
     roles: '',
     imagePdfUrl: '',
   });
+  const fileInputRef = useRef(null); // Reference for imagePdfUrl file input
+  const previewFileInputRef = useRef(null); // Reference for schemePreview file input
   const rowsPerPage = 10;
 
   useEffect(() => {
     async function fetchData() {
       try {
         if (!session) {
-          throw new Error("User session is not available.");
+          throw new Error('User session is not available.');
         }
 
         const res = await fetch('/api/schemes', {
@@ -43,11 +46,11 @@ export default function LoyaltySchemesPage() {
         const result = await res.json();
 
         if (res.status !== 200) {
-          throw new Error(result.error || "Failed to fetch content");
+          throw new Error(result.error || 'Failed to fetch content');
         }
         setData(result);
       } catch (error) {
-        const { message } = handleError(error, "Content Management");
+        const { message } = handleError(error, 'Content Management');
         setError(message);
         showErrorToast(message);
       }
@@ -63,14 +66,30 @@ export default function LoyaltySchemesPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile && (selectedFile.type.startsWith('image/') || selectedFile.type === 'application/pdf')) {
       setFile(selectedFile);
       setFormData((prev) => ({ ...prev, imagePdfUrl: '' }));
     } else {
-      showErrorToast('Please select an image or PDF file');
+      showErrorToast('Please select an image or PDF file for Image/PDF');
       setFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handlePreviewFileChange = (e) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile && (selectedFile.type.startsWith('image/') || selectedFile.type === 'application/pdf')) {
+      setPreviewFile(selectedFile);
+    } else {
+      showErrorToast('Please select an image or PDF file for Scheme Preview');
+      setPreviewFile(null);
+      if (previewFileInputRef.current) {
+        previewFileInputRef.current.value = '';
+      }
     }
   };
 
@@ -78,21 +97,20 @@ export default function LoyaltySchemesPage() {
     e.preventDefault();
     try {
       const method = selectedScheme ? 'PUT' : 'POST';
-      const url = selectedScheme
-        ? `/api/schemes/${selectedScheme.schemeId}`
-        : '/api/schemes';
-
+      const url = selectedScheme ? `/api/schemes/${selectedScheme.schemeId}` : '/api/schemes';
 
       const form = new FormData();
       form.append('schemeName', formData.schemeName);
       form.append('startDate', formData.startDate);
       form.append('endDate', formData.endDate);
       form.append('roles', formData.roles);
-
-      // Attach file if present
       if (file) {
-        form.append('file', file);
+        form.append('file', file); // For schemeResourcee
       }
+      if (previewFile) {
+        form.append('schemePreview', previewFile); // For schemePreview
+      }
+
       const res = await fetch(url, {
         method,
         headers: {
@@ -104,13 +122,27 @@ export default function LoyaltySchemesPage() {
       const result = await res.json();
 
       if (res.status !== 200 && res.status !== 201) {
-        throw new Error(result.error || "Failed to save content");
+        throw new Error(result.error || 'Failed to save content');
       }
 
       toast.success(`Content ${selectedScheme ? 'updated' : 'created'} successfully!`);
       setIsModalOpen(false);
-      setFormData((prev) => ({ ...prev, startDate: '', endDate: '', roles: '', imagePdfUrl: '', schemeName: '' }));
+      setFormData({
+        schemeName: '',
+        startDate: '',
+        endDate: '',
+        roles: '',
+        imagePdfUrl: '',
+      });
       setSelectedScheme(null);
+      setFile(null);
+      setPreviewFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      if (previewFileInputRef.current) {
+        previewFileInputRef.current.value = '';
+      }
 
       // Refresh data
       const fetchRes = await fetch('/api/schemes', {
@@ -119,22 +151,28 @@ export default function LoyaltySchemesPage() {
       const newData = await fetchRes.json();
       setData(newData);
     } catch (error) {
-      const { message } = handleError(error, "Scheme Management");
+      const { message } = handleError(error, 'Scheme Management');
       showErrorToast(message);
     }
   };
 
-  const handleEdit = (content: any) => {
+  const handleEdit = (content) => {
     setSelectedScheme(content);
-    setFormData((prev) => ({
-      ...prev,
-      startDate: content.startDate,
+    setFormData({
+      schemeName: content.schemeName || '',
+      startDate: content.startDate || '',
       endDate: content.endDate || '',
-      imagePdfUrl: content.imagePdfUrl || '',
-      roles: content.roles || '',
-      schemeName: content.schemeName || ''
-    }));
-
+      roles: content.applicableRoles || '',
+      imagePdfUrl: content.schemeResourceUrl || '',
+    });
+    setFile(null);
+    setPreviewFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    if (previewFileInputRef.current) {
+      previewFileInputRef.current.value = '';
+    }
     setIsModalOpen(true);
   };
 
@@ -146,21 +184,21 @@ export default function LoyaltySchemesPage() {
       });
 
       if (res.status !== 200) {
-        throw new Error("Failed to delete content");
+        throw new Error('Failed to delete content');
       }
 
-      toast.success("Content deleted successfully!");
+      toast.success('Content deleted successfully!');
       setIsDeleteModalOpen(false);
       setDeleteSchemeId(null);
 
       // Refresh data
       const fetchRes = await fetch('/api/schemes', {
-        headers: { Authorization: `Bearer ${session?.user?.id}` },
+        headers: { Authorization: `Bearer ${session.user.id}` },
       });
       const newData = await fetchRes.json();
       setData(newData);
     } catch (error) {
-      const { message } = handleError(error, "Schemes");
+      const { message } = handleError(error, 'Schemes');
       showErrorToast(message);
     }
   };
@@ -196,7 +234,7 @@ export default function LoyaltySchemesPage() {
 
     buttons.push(1);
     if (startPage > 2) buttons.push('...');
-    for (let i = startPage; i <= endPage; i++) buttons.push(i)
+    for (let i = startPage; i <= endPage; i++) buttons.push(i);
     if (endPage < totalPages - 1) buttons.push('...');
     if (totalPages > 1) buttons.push(totalPages);
 
@@ -204,7 +242,11 @@ export default function LoyaltySchemesPage() {
   };
 
   if (error) {
-    return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-base-100 via-base-200 to-base-300 text-error text-lg">Error: {error}</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-base-100 via-base-200 to-base-300 text-error text-lg">
+        Error: {error}
+      </div>
+    );
   }
 
   return (
@@ -237,7 +279,7 @@ export default function LoyaltySchemesPage() {
           font-size: 1.875rem;
           text-decoration: none;
           white-space: nowrap;
-          font-family: "Poppins", system-ui, -apple-system, sans-serif;
+          font-family: 'Poppins', system-ui, -apple-system, sans-serif;
         }
       `}</style>
       <div className="min-h-screen bg-gradient-to-br from-base-100 via-base-200 to-base-300 animate-gradient-x p-4 md:p-6 lg:p-8">
@@ -251,7 +293,21 @@ export default function LoyaltySchemesPage() {
                 <button
                   onClick={() => {
                     setSelectedScheme(null);
-                    setFormData((prev) => ({ ...prev, startDate: '', endDate: '', roles: '', imagePdfUrl: '', schemeName: '' }));
+                    setFormData({
+                      schemeName: '',
+                      startDate: '',
+                      endDate: '',
+                      roles: '',
+                      imagePdfUrl: '',
+                    });
+                    setFile(null);
+                    setPreviewFile(null);
+                    if (fileInputRef.current) {
+                      fileInputRef.current.value = '';
+                    }
+                    if (previewFileInputRef.current) {
+                      previewFileInputRef.current.value = '';
+                    }
                     setIsModalOpen(true);
                   }}
                   className="btn btn-primary btn-sm rounded-btn bg-gradient-to-r from-primary to-secondary text-primary-content border-none hover:from-primary-focus hover:to-secondary-focus hover:scale-110 transition-all duration-300"
@@ -272,6 +328,7 @@ export default function LoyaltySchemesPage() {
                       <th className="text-sm md:text-base">Start Date</th>
                       <th className="text-sm md:text-base">End Date</th>
                       <th className="text-sm md:text-base">Created At</th>
+                      <th className="text-sm md:text-base">Preview</th>
                       {/* <th className="text-sm md:text-base">Action</th> */}
                     </tr>
                   </thead>
@@ -283,10 +340,15 @@ export default function LoyaltySchemesPage() {
                       >
                         <td className="text-sm md:text-base">{item.schemeId}</td>
                         <td className="text-sm md:text-base">{item.schemeName}</td>
-                        <td className="text-sm md:text-base">{item.isActive}</td>
+                        <td className="text-sm md:text-base">{item.isActive ? 'Yes' : 'No'}</td>
                         <td className="text-sm md:text-base truncate max-w-xs">
                           {item.schemeResourceUrl ? (
-                            <a href={item.schemeResourceUrl} target="_blank" rel="noopener noreferrer" className="link link-primary">
+                            <a
+                              href={item.schemeResourceUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="link link-primary"
+                            >
                               View
                             </a>
                           ) : '-'}
@@ -295,6 +357,18 @@ export default function LoyaltySchemesPage() {
                         <td className="text-sm md:text-base">{item.startDate}</td>
                         <td className="text-sm md:text-base">{item.endDate}</td>
                         <td className="text-sm md:text-base">{new Date(item.lastUpdatedAt).toLocaleString()}</td>
+                        <td className="text-sm md:text-base truncate max-w-xs">
+                          {item.schemePreviewUrl ? (
+                            <a
+                              href={item.schemePreviewUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="link link-primary"
+                            >
+                              View
+                            </a>
+                          ) : '-'}
+                        </td>
                         {/* <td className="text-sm md:text-base">
                           <button
                             onClick={() => handleEdit(item)}
@@ -335,12 +409,13 @@ export default function LoyaltySchemesPage() {
                       <button
                         key={index}
                         onClick={() => typeof page === 'number' && handlePageChange(page)}
-                        className={`btn btn-sm ${page === currentPage
-                          ? 'btn-active bg-primary text-primary-content'
-                          : typeof page === 'number'
+                        className={`btn btn-sm ${
+                          page === currentPage
+                            ? 'btn-active bg-primary text-primary-content'
+                            : typeof page === 'number'
                             ? 'bg-base-100 text-base-content hover:bg-gradient-to-r hover:from-primary/20 hover:to-secondary/20'
                             : 'btn-disabled text-base-content/50'
-                          } border-none transition-all duration-300 min-w-[2.5rem]`}
+                        } border-none transition-all duration-300 min-w-[2.5rem]`}
                         disabled={typeof page !== 'number'}
                       >
                         {page}
@@ -360,13 +435,17 @@ export default function LoyaltySchemesPage() {
           </div>
 
           {/* Edit/Create Modal */}
-          <input type="checkbox" id="content-modal" className="modal-toggle" checked={isModalOpen} onChange={() => setIsModalOpen(!isModalOpen)} />
+          <input
+            type="checkbox"
+            id="content-modal"
+            className="modal-toggle"
+            checked={isModalOpen}
+            onChange={() => setIsModalOpen(!isModalOpen)}
+          />
           <div className="modal">
             <div className="modal-box bg-base-100">
               <h3 className="text-lg font-bold">{selectedScheme ? 'Edit Scheme' : 'Add Scheme'}</h3>
               <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-
-
                 {/* Scheme Name */}
                 <div>
                   <label className="label">
@@ -400,7 +479,6 @@ export default function LoyaltySchemesPage() {
                     <option value="3">Retailer</option>
                   </select>
                 </div>
-
                 {/* Image/PDF URL */}
                 <div>
                   <label className="label">
@@ -411,9 +489,22 @@ export default function LoyaltySchemesPage() {
                     className="file-input file-input-bordered w-full"
                     accept="image/*,application/pdf"
                     onChange={handleFileChange}
+                    ref={fileInputRef}
                   />
                 </div>
-
+                {/* Scheme Preview */}
+                <div>
+                  <label className="label">
+                    <span className="label-text">Scheme Preview</span>
+                  </label>
+                  <input
+                    type="file"
+                    className="file-input file-input-bordered w-full"
+                    accept="image/*,application/pdf"
+                    onChange={handlePreviewFileChange}
+                    ref={previewFileInputRef}
+                  />
+                </div>
                 {/* Start Date */}
                 <div>
                   <label className="label">
@@ -428,7 +519,6 @@ export default function LoyaltySchemesPage() {
                     required
                   />
                 </div>
-
                 {/* End Date */}
                 <div>
                   <label className="label">
@@ -443,7 +533,6 @@ export default function LoyaltySchemesPage() {
                     required
                   />
                 </div>
-
                 {/* Modal Actions */}
                 <div className="modal-action">
                   <button
@@ -454,10 +543,10 @@ export default function LoyaltySchemesPage() {
                   </button>
                   <button
                     type="button"
-                    // onClick={() => setIsModalOpen(false)}
                     onClick={() => {
                       setIsModalOpen(false);
                       setFile(null);
+                      setPreviewFile(null);
                       setFormData({
                         schemeName: '',
                         startDate: '',
@@ -466,6 +555,12 @@ export default function LoyaltySchemesPage() {
                         imagePdfUrl: '',
                       });
                       setSelectedScheme(null);
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = '';
+                      }
+                      if (previewFileInputRef.current) {
+                        previewFileInputRef.current.value = '';
+                      }
                     }}
                     className="btn btn-ghost"
                   >
@@ -476,9 +571,14 @@ export default function LoyaltySchemesPage() {
             </div>
           </div>
 
-
           {/* Delete Confirmation Modal */}
-          <input type="checkbox" id="delete-modal" className="modal-toggle" checked={isDeleteModalOpen} onChange={() => setIsDeleteModalOpen(!isDeleteModalOpen)} />
+          <input
+            type="checkbox"
+            id="delete-modal"
+            className="modal-toggle"
+            checked={isDeleteModalOpen}
+            onChange={() => setIsDeleteModalOpen(!isDeleteModalOpen)}
+          />
           <div className="modal">
             <div className="modal-box bg-base-100">
               <h3 className="text-lg font-bold">Confirm Deletion</h3>

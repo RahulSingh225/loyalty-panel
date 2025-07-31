@@ -261,7 +261,6 @@ export const permissions = pgTable("permissions", {
 }, (table) => [
 	unique("permissions_permission_name_key").on(table.permissionName),
 ]);
-
 export const schemes = pgTable("schemes", {
 	schemeId: integer("scheme_id").primaryKey().notNull(),
 	schemeName: text("scheme_name").notNull(),
@@ -271,8 +270,8 @@ export const schemes = pgTable("schemes", {
 	startDate: date("start_date"),
 	endDate: date("end_date"),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+	schemePreview: text("scheme_preview"),
 });
-
 export const transaction = pgTable("transaction", {
 	transactionId: serial("transaction_id").primaryKey().notNull(),
 	userId: integer("user_id").notNull(),
