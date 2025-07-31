@@ -6,6 +6,7 @@ import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
 import Link from "next/link";
+import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import { redirect } from "next/dist/server/api-utils";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -26,6 +27,7 @@ export default async function RootLayout({
   return (
     <html lang="en" data-theme="cupcake">
       <body className={inter.className}>
+        <AppRouterCacheProvider>
         <ThemeProvider>
           <ToastProvider />
             {session?.user && (
@@ -71,6 +73,7 @@ export default async function RootLayout({
         </div>
       </footer>
         </ThemeProvider>
+        </AppRouterCacheProvider>
       </body>
     </html>
   );
