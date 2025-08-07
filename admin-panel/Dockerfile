@@ -2,20 +2,26 @@
 FROM node:18-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
-RUN npm install
+# Install only production dependencies for the build
+RUN npm ci --only=production
+# Install dev dependencies needed for the build
+RUN npm install --only=dev
 COPY . .
-# Build the Next.js app, which compiles TypeScript
-RUN npm run build
+# Build the Next.js app with standalone output
+RUN npm run build --standalone
 
 # Stage 2: Create production image
 FROM node:18-alpine
 WORKDIR /app
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/.next ./.next
+# Install only production dependencies
+COPY package*.json ./
+RUN npm ci --only=production --ignore-scripts
+# Copy only the standalone output and public assets
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/next.config.ts ./
-COPY --from=builder /app/tsconfig.json ./
+# Clean npm cache to reduce size
+RUN npm cache clean --force
 
 # Expose the default Next.js port
 EXPOSE 4000
@@ -25,4 +31,4 @@ ENV NODE_ENV=production
 ENV PORT=4000
 
 # Start the Next.js app
-CMD ["npm", "start"]
+CMD ["node", "server.js"]

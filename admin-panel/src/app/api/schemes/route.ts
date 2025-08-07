@@ -6,6 +6,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import Busboy from 'busboy';
 import { Readable } from 'stream';
 import { fileService } from '@/app/services/file.service';
+import path from 'path';
+import { randomUUID } from 'crypto';
 
 // GET: Fetch all schemes with their details, including the new schemePreview field
 export async function GET() {
@@ -59,60 +61,18 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const formFields: Record<string, string> = {};
-    let fileBuffer: Buffer | null = null;
-    let fileNameFromClient: string = '';
+    const formData = await req.formData();
 
-    const busboy = Busboy({ headers: Object.fromEntries(req.headers) });
-
-    const filePromise = new Promise<void>((resolve, reject) => {
-      busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
-        const chunks: Buffer[] = [];
-        fileNameFromClient = filename;
-
-        file.on('data', (chunk: Buffer) => {
-          chunks.push(chunk);
-        });
-
-        file.on('end', () => {
-          fileBuffer = Buffer.concat(chunks);
-          resolve();
-        });
-
-        file.on('error', (err: Error) => {
-          reject(err);
-        });
-      });
-
-      busboy.on('field', (fieldname: string, val: string) => {
-        formFields[fieldname] = val;
-      });
-
-      busboy.on('finish', resolve);
-      busboy.on('error', reject);
-
-      const reader = req.body?.getReader();
-      if (!reader) {
-        reject(new Error('No request body provided'));
-        return;
-      }
-
-      const stream = new Readable({
-        async read() {
-          const { done, value } = await reader.read();
-          if (done) return this.push(null);
-          this.push(value);
-        },
-      });
-
-      stream.pipe(busboy);
-    });
-
-    await filePromise;
-
-    // Parse and validate fields
-    const { schemeName, startDate, endDate, roles, schemePreview } = formFields;
-
+    // Extract form fields
+    const schemeName = formData.get('schemeName') as string;
+    const startDate = formData.get('startDate') as string;
+    const endDate = formData.get('endDate') as string;
+    const roles = formData.get('roles') as string;
+    const schemePreview = formData.get('schemePreview') as File;
+    const file = formData.get('file') as File;
+ 
+    
+    // Validate required fields
     if (!schemeName || !startDate || !endDate || !roles) {
       return NextResponse.json(
         { error: 'Missing required fields: schemeName, startDate, endDate, or roles' },
@@ -120,20 +80,47 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!fileBuffer) {
+    // Validate main file
+    if (!file) {
       return NextResponse.json(
         { error: 'A file (image or PDF) is required for schemeResourcee' },
         { status: 400 }
       );
     }
 
+    // Validate file types
+    if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+      return NextResponse.json(
+        { error: 'Main file must be an image or PDF' },
+        { status: 400 }
+      );
+    }
+
+    if (schemePreview && !schemePreview.name.match(/\.(jpeg|jpg|png)$/i)) {
+      console.error('Invalid preview file type:', schemePreview.type);
+      return NextResponse.json(
+        { error: 'Preview file must be a JPG or PNG' },
+        { status: 400 }
+      );
+    }
+
+    // Upload main file
+    const fileBuffer = Buffer.from(await file.arrayBuffer());
+    const fileKey = `RANJIT/SCHEME/${randomUUID()}-${schemeName}${path.extname(file.name)}`;
+    const fileUrl = await fileService.upload(fileBuffer, fileKey);
+
+    // Upload preview file (if provided)
+    let previewFileUrl = schemePreview || '';
+    let previewFileKey = '';
+    if (schemePreview) {
+      const previewBuffer = Buffer.from(await schemePreview.arrayBuffer());
+      previewFileKey = `RANJIT/SCHEME/preview-${randomUUID()}-${schemeName}${path.extname(schemePreview.name)}`;
+      previewFileUrl = await fileService.upload(previewBuffer, previewFileKey);
+    }
+
     // Get next scheme ID
     const [maxIdResult] = await db.select({ maxId: max(schemes.schemeId) }).from(schemes);
     const nextSchemeId = (maxIdResult?.maxId ?? 0) + 1;
-
-    // Upload file
-    const filePath = fileService.generateFilePath(`${nextSchemeId}_${schemeName}`, 'CLAIMS');
-    const fileKey = await fileService.upload(fileBuffer, filePath);
 
     // Insert scheme into database
     await db.insert(schemes).values({
@@ -142,12 +129,12 @@ export async function POST(req: NextRequest) {
       startDate,
       endDate,
       schemeResourcee: fileKey,
-      schemePreview: schemePreview || null, // Optional field
+      schemePreview: previewFileKey || null, // Use uploaded preview URL or provided schemePreview
       applicableRoles: [parseInt(roles)], // Convert to integer array
       isActive: true,
     });
 
-    return NextResponse.json({ message: 'success' });
+    return NextResponse.json({ message: 'Scheme created successfully' }, { status: 201 });
   } catch (error) {
     console.error('Upload Error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

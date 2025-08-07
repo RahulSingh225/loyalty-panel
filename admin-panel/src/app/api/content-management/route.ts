@@ -60,40 +60,52 @@ export async function GET() {
 
 
 export async function POST(req: NextRequest) {
-
   const session = await auth();
+  if (!session?.user || session.user.role !== "admin") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   try {
-    let data: any = [];
     const formData = await req.formData();
     const file = formData.get('file') as File;
-    let fileUrl:any = "";
+    const previewFile = formData.get('preview') as File; // Added preview file
+    let fileUrl = "";
+    let previewFileUrl = "";
+
+    // Handle main file upload (image or PDF)
     if (file) {
       const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
-      const filePath = `uploads/${randomUUID()}-${file.name}`;
+      const filePath = `RANJIT/${formData.get("contentType")}/${file.name}`;
       fileUrl = await fileService.upload(buffer, filePath);
     }
+
+    // Handle preview image upload (JPG/PNG)
+    let previewFilePath = "";
+    if (previewFile) {
+      const arrayBuffer = await previewFile.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+       previewFilePath = `RANJIT/${formData.get("contentType")}/${previewFile.name}`;
+      previewFileUrl = await fileService.upload(buffer, previewFilePath);
+    }
+
     const [maxIdResult] = await db.select({ maxId: max(contentManagement.contentId) }).from(contentManagement);
     const nextContentId = (maxIdResult?.maxId ?? 0) + 1;
-    console.log("vdsvdsc", fileUrl)
+
     await db.transaction(async (tran) => {
-      // Step 2: Insert the new content
       await tran.insert(contentManagement).values({
-        contentId: nextContentId,
-        contentType: formData?.get("contentType") as string,
-        content: formData?.get("content") as string,
-        imagePdfUrl: fileUrl || "",
-        // lastUpdatedAt: '', 
+        
+        contentType: formData.get("contentType") as string,
+        content: formData.get("content") as string,
+        imagePdfUrl: fileUrl,
+        preview: previewFilePath || "", // Store preview image URL
+      
       });
-    })
+    });
 
-
-    return NextResponse.json({ message: "success" });
+    return NextResponse.json({ message: "Content created successfully" }, { status: 201 });
   } catch (error) {
-    console.log(error, "erOne")
+    console.error(error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-
-
 }

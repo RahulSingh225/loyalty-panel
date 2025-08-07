@@ -1,14 +1,7 @@
-import { pgTable, serial, integer, text, numeric, unique, varchar, boolean, timestamp, foreignKey, json, date, jsonb, primaryKey } from "drizzle-orm/pg-core"
+import { pgTable, unique, varchar, boolean, integer, numeric, timestamp, text, serial, json, foreignKey, jsonb, date, primaryKey } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 
-
-export const schemedetails = pgTable("schemedetails", {
-	id: serial().primaryKey().notNull(),
-	schemeId: integer("scheme_id").notNull(),
-	groupName: text("group_name").notNull(),
-	multiplier: numeric().notNull(),
-});
 
 export const salesPointsClaimTransfer = pgTable("sales_points_claim_transfer", {
 	documentNo: varchar("document_no", { length: 50 }),
@@ -62,23 +55,6 @@ export const salesPointLedgerEntry = pgTable("sales_point_ledger_entry", {
 	unique("sales_point_ledger_entry_entry_no_key").on(table.entryNo),
 ]);
 
-export const navisionSalespersonList = pgTable("navision_salesperson_list", {
-	code: varchar({ length: 50 }),
-	name: varchar({ length: 100 }),
-	address: varchar({ length: 255 }),
-	address2: varchar("address_2", { length: 255 }),
-	city: varchar({ length: 100 }),
-	state: varchar({ length: 100 }),
-	postCode: varchar("post_code", { length: 20 }),
-	whatsappMobileNumber: varchar("whatsapp_mobile_number", { length: 20 }),
-	etag: varchar({ length: 500 }),
-	onboarded: boolean().default(false).notNull(),
-	createdAt: timestamp({ withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
-	onboardedAt: timestamp({ withTimezone: true, mode: 'string' }),
-}, (table) => [
-	unique("navision_salesperson_list_whatsapp_mobile_number_key").on(table.whatsappMobileNumber),
-]);
-
 export const navisionNotifyCustomer = pgTable("navision_notify_customer", {
 	no: varchar({ length: 50 }),
 	name: varchar({ length: 100 }),
@@ -102,6 +78,40 @@ export const navisionNotifyCustomer = pgTable("navision_notify_customer", {
 	onboardedAt: timestamp({ withTimezone: true, mode: 'string' }),
 }, (table) => [
 	unique("navision_notify_customer_no_key").on(table.no),
+]);
+
+export const schemedetails = pgTable("schemedetails", {
+	id: serial().primaryKey().notNull(),
+	schemeId: integer("scheme_id").notNull(),
+	groupName: text("group_name").notNull(),
+	multiplier: numeric().notNull(),
+	uniqueId: text("unique_id"),
+});
+
+export const apiResponseLogs = pgTable("api_response_logs", {
+	id: serial().primaryKey().notNull(),
+	refNo: text("ref_no"),
+	apiUrl: text("api_url"),
+	apiResponse: json("api_response"),
+	payload: json(),
+	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const navisionSalespersonList = pgTable("navision_salesperson_list", {
+	code: varchar({ length: 50 }),
+	name: varchar({ length: 100 }),
+	address: varchar({ length: 255 }),
+	address2: varchar("address_2", { length: 255 }),
+	city: varchar({ length: 100 }),
+	state: varchar({ length: 100 }),
+	postCode: varchar("post_code", { length: 20 }),
+	whatsappMobileNumber: varchar("whatsapp_mobile_number", { length: 20 }),
+	etag: varchar({ length: 500 }),
+	onboarded: boolean().default(false).notNull(),
+	createdAt: timestamp({ withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+	onboardedAt: timestamp({ withTimezone: true, mode: 'string' }),
+}, (table) => [
+	unique("navision_salesperson_list_whatsapp_mobile_number_key").on(table.whatsappMobileNumber),
 ]);
 
 export const retailerRewardPointEntry = pgTable("retailer_reward_point_entry", {
@@ -152,6 +162,7 @@ export const contentManagement = pgTable("content_management", {
 	content: text(),
 	imagePdfUrl: varchar("image_pdf_url", { length: 255 }),
 	lastUpdatedAt: timestamp("last_updated_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+	preview: text(),
 });
 
 export const mediaLinks = pgTable("media_links", {
@@ -173,30 +184,6 @@ export const gifts = pgTable("gifts", {
 	isActive: boolean("is_active"),
 	value: integer(),
 });
-
-export const navisionCustomerMaster = pgTable("navision_customer_master", {
-	no: varchar("No", { length: 20 }).primaryKey().notNull(),
-	name: varchar("Name", { length: 100 }),
-	address: varchar("Address", { length: 100 }),
-	address2: varchar("Address_2", { length: 100 }),
-	city: varchar("City", { length: 50 }),
-	postCode: varchar("Post_Code", { length: 20 }),
-	stateCode: varchar("State_Code", { length: 10 }),
-	countryRegionCode: varchar("Country_Region_Code", { length: 10 }),
-	whatsappNo1: varchar("Whatsapp_No_1", { length: 15 }),
-	whatsappNo2: varchar("Whatsapp_No_2", { length: 15 }),
-	pANNo: varchar("P_A_N_No", { length: 20 }),
-	gstRegistrationNo: varchar("GST_Registration_No", { length: 20 }),
-	salesAgent: varchar("Sales_Agent", { length: 20 }),
-	salesAgentName: varchar("Sales_Agent_Name", { length: 100 }),
-	salespersonCode: varchar("Salesperson_Code", { length: 20 }),
-	etag: varchar("ETag", { length: 500 }),
-	createdAt: timestamp("CreatedAt", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
-	onboarded: boolean("Onboarded").default(false),
-	onboardedAt: timestamp("OnboardedAt", { mode: 'string' }),
-}, (table) => [
-	unique("customer_unique").on(table.no),
-]);
 
 export const navisionVendorMaster = pgTable("navision_vendor_master", {
 	no: varchar("No", { length: 20 }).primaryKey().notNull(),
@@ -224,6 +211,30 @@ export const navisionVendorMaster = pgTable("navision_vendor_master", {
 	unique("vendor_unique").on(table.no),
 ]);
 
+export const navisionCustomerMaster = pgTable("navision_customer_master", {
+	no: varchar("No", { length: 20 }).primaryKey().notNull(),
+	name: varchar("Name", { length: 100 }),
+	address: varchar("Address", { length: 100 }),
+	address2: varchar("Address_2", { length: 100 }),
+	city: varchar("City", { length: 50 }),
+	postCode: varchar("Post_Code", { length: 20 }),
+	stateCode: varchar("State_Code", { length: 10 }),
+	countryRegionCode: varchar("Country_Region_Code", { length: 10 }),
+	whatsappNo1: varchar("Whatsapp_No_1", { length: 15 }),
+	whatsappNo2: varchar("Whatsapp_No_2", { length: 15 }),
+	pANNo: varchar("P_A_N_No", { length: 20 }),
+	gstRegistrationNo: varchar("GST_Registration_No", { length: 20 }),
+	salesAgent: varchar("Sales_Agent", { length: 20 }),
+	salesAgentName: varchar("Sales_Agent_Name", { length: 100 }),
+	salespersonCode: varchar("Salesperson_Code", { length: 20 }),
+	etag: varchar("ETag", { length: 500 }),
+	createdAt: timestamp("CreatedAt", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+	onboarded: boolean("Onboarded").default(false),
+	onboardedAt: timestamp("OnboardedAt", { mode: 'string' }),
+}, (table) => [
+	unique("customer_unique").on(table.no),
+]);
+
 export const pointAllocationLog = pgTable("point_allocation_log", {
 	allocationId: serial("allocation_id").primaryKey().notNull(),
 	invoiceId: integer("invoice_id"),
@@ -237,6 +248,7 @@ export const pointAllocationLog = pgTable("point_allocation_log", {
 	adminApprovalDate: timestamp("admin_approval_date", { mode: 'string' }),
 	description: text(),
 	details: json().array(),
+	documentNo: text("document_no"),
 }, (table) => [
 	foreignKey({
 			columns: [table.adminApprovedBy],
@@ -260,33 +272,6 @@ export const permissions = pgTable("permissions", {
 	permissionName: varchar("permission_name", { length: 100 }).notNull(),
 }, (table) => [
 	unique("permissions_permission_name_key").on(table.permissionName),
-]);
-export const schemes = pgTable("schemes", {
-	schemeId: integer("scheme_id").primaryKey().notNull(),
-	schemeName: text("scheme_name").notNull(),
-	schemeResourcee: text("scheme_resourcee").notNull(),
-	isActive: boolean("is_active").default(false).notNull(),
-	applicableRoles: integer("applicable_roles").array(),
-	startDate: date("start_date"),
-	endDate: date("end_date"),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
-	schemePreview: text("scheme_preview"),
-});
-export const transaction = pgTable("transaction", {
-	transactionId: serial("transaction_id").primaryKey().notNull(),
-	userId: integer("user_id").notNull(),
-	transactionType: varchar("transaction_type", { length: 50 }).notNull(),
-	pointsAmount: integer("points_amount").notNull(),
-	transactionDate: timestamp("transaction_date", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
-	referenceId: integer("reference_id"),
-	referenceTable: varchar("reference_table", { length: 50 }),
-	description: text(),
-}, (table) => [
-	foreignKey({
-			columns: [table.userId],
-			foreignColumns: [userMaster.userId],
-			name: "transaction_user_id_fkey"
-		}),
 ]);
 
 export const redemptionRequest = pgTable("redemption_request", {
@@ -317,6 +302,42 @@ export const redemptionRequest = pgTable("redemption_request", {
 		}),
 	unique("entry_no_navision_id").on(table.navisionId),
 ]);
+
+export const transaction = pgTable("transaction", {
+	transactionId: serial("transaction_id").primaryKey().notNull(),
+	userId: integer("user_id").notNull(),
+	transactionType: varchar("transaction_type", { length: 50 }).notNull(),
+	pointsAmount: integer("points_amount").notNull(),
+	transactionDate: timestamp("transaction_date", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+	referenceId: integer("reference_id"),
+	referenceTable: varchar("reference_table", { length: 50 }),
+	description: text(),
+}, (table) => [
+	foreignKey({
+			columns: [table.userId],
+			foreignColumns: [userMaster.userId],
+			name: "transaction_user_id_fkey"
+		}),
+]);
+
+export const onboardingLogs = pgTable("onboarding_logs", {
+	id: serial().primaryKey().notNull(),
+	refNo: text("ref_no").notNull(),
+	result: jsonb().notNull(),
+	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const schemes = pgTable("schemes", {
+	schemeId: integer("scheme_id").primaryKey().notNull(),
+	schemeName: text("scheme_name").notNull(),
+	schemeResourcee: text("scheme_resourcee").notNull(),
+	isActive: boolean("is_active").default(false).notNull(),
+	applicableRoles: integer("applicable_roles").array(),
+	startDate: date("start_date"),
+	endDate: date("end_date"),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+	schemePreview: text("scheme_preview"),
+});
 
 export const distributor = pgTable("distributor", {
 	distributorId: serial("distributor_id").primaryKey().notNull(),
@@ -465,6 +486,35 @@ export const userMaster = pgTable("user_master", {
 	unique("user_master_secondary_mobile_number_key").on(table.secondaryMobileNumber),
 ]);
 
+export const navisionRetailMaster = pgTable("navision_retail_master", {
+	no: varchar("No", { length: 20 }).primaryKey().notNull(),
+	address2: varchar("Address_2", { length: 100 }),
+	city: varchar("City", { length: 50 }),
+	countryRegionCode: varchar("Country_Region_Code", { length: 10 }),
+	whatsappNo: varchar("Whatsapp_No", { length: 15 }),
+	pANNo: varchar("P_A_N_No", { length: 20 }),
+	gstRegistrationNo: varchar("GST_Registration_No", { length: 30 }),
+	beatName: varchar("Beat_Name", { length: 50 }),
+	gujarat: boolean("Gujarat"),
+	etag: varchar("ETag", { length: 500 }),
+	createdAt: timestamp("CreatedAt", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+	onboarded: boolean("Onboarded").default(false),
+	onboardedAt: timestamp("OnboardedAt", { mode: 'string' }),
+	shopName: varchar("Shop_Name", { length: 100 }),
+	shopAddress: varchar("Shop_Address", { length: 100 }),
+	pinCode: varchar("Pin_Code", { length: 20 }),
+	state: varchar("State", { length: 30 }),
+	whatsappNo2: varchar("Whatsapp_No_2", { length: 15 }),
+	agentName: varchar("Agent_Name", { length: 100 }),
+	supplyFrom: varchar("Supply_From", { length: 50 }),
+	aadhaarNo: varchar("Aadhaar_No", { length: 20 }),
+	salesPersonCode: varchar("Sales_Person_Code", { length: 20 }),
+	salesPersonName: varchar("Sales_Person_Name", { length: 100 }),
+	agentCode: varchar("Agent_Code", { length: 20 }),
+}, (table) => [
+	unique("retail_unique").on(table.no),
+]);
+
 export const salesperson = pgTable("salesperson", {
 	salespersonId: serial("salesperson_id").primaryKey().notNull(),
 	userId: integer("user_id").notNull(),
@@ -492,35 +542,6 @@ export const salesperson = pgTable("salesperson", {
 		}),
 	unique("salesperson_user_id_key").on(table.userId),
 	unique("salesperson_navision_id_key").on(table.navisionId),
-]);
-
-export const navisionRetailMaster = pgTable("navision_retail_master", {
-	no: varchar("No", { length: 20 }).primaryKey().notNull(),
-	address2: varchar("Address_2", { length: 100 }),
-	city: varchar("City", { length: 50 }),
-	countryRegionCode: varchar("Country_Region_Code", { length: 10 }),
-	whatsappNo: varchar("Whatsapp_No", { length: 15 }),
-	pANNo: varchar("P_A_N_No", { length: 20 }),
-	gstRegistrationNo: varchar("GST_Registration_No", { length: 30 }),
-	beatName: varchar("Beat_Name", { length: 50 }),
-	gujarat: boolean("Gujarat"),
-	etag: varchar("ETag", { length: 500 }),
-	createdAt: timestamp("CreatedAt", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
-	onboarded: boolean("Onboarded").default(false),
-	onboardedAt: timestamp("OnboardedAt", { mode: 'string' }),
-	shopName: varchar("Shop_Name", { length: 100 }),
-	shopAddress: varchar("Shop_Address", { length: 100 }),
-	pinCode: varchar("Pin_Code", { length: 20 }),
-	state: varchar("State", { length: 20 }),
-	whatsappNo2: varchar("Whatsapp_No_2", { length: 15 }),
-	agentName: varchar("Agent_Name", { length: 100 }),
-	supplyFrom: varchar("Supply_From", { length: 50 }),
-	aadhaarNo: varchar("Aadhaar_No", { length: 20 }),
-	salesPersonCode: varchar("Sales_Person_Code", { length: 20 }),
-	salesPersonName: varchar("Sales_Person_Name", { length: 100 }),
-	agentCode: varchar("Agent_Code", { length: 20 }),
-}, (table) => [
-	unique("retail_unique").on(table.no),
 ]);
 
 export const rolePermissions = pgTable("role_permissions", {

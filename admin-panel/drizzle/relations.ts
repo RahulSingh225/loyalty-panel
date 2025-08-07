@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { userMaster, pointAllocationLog, transaction, redemptionRequest, distributor, notificationLog, redemptionRewardLines, retailer, userRoles, salesperson, permissions, rolePermissions } from "./schema";
+import { userMaster, pointAllocationLog, redemptionRequest, transaction, distributor, notificationLog, redemptionRewardLines, retailer, userRoles, salesperson, permissions, rolePermissions } from "./schema";
 
 export const pointAllocationLogRelations = relations(pointAllocationLog, ({one}) => ({
 	userMaster_adminApprovedBy: one(userMaster, {
@@ -29,8 +29,8 @@ export const userMasterRelations = relations(userMaster, ({one, many}) => ({
 	pointAllocationLogs_targetUserId: many(pointAllocationLog, {
 		relationName: "pointAllocationLog_targetUserId_userMaster_userId"
 	}),
-	transactions: many(transaction),
 	redemptionRequests: many(redemptionRequest),
+	transactions: many(transaction),
 	distributors: many(distributor),
 	notificationLogs: many(notificationLog),
 	retailers: many(retailer),
@@ -41,19 +41,19 @@ export const userMasterRelations = relations(userMaster, ({one, many}) => ({
 	salespeople: many(salesperson),
 }));
 
-export const transactionRelations = relations(transaction, ({one}) => ({
-	userMaster: one(userMaster, {
-		fields: [transaction.userId],
-		references: [userMaster.userId]
-	}),
-}));
-
 export const redemptionRequestRelations = relations(redemptionRequest, ({one, many}) => ({
 	userMaster: one(userMaster, {
 		fields: [redemptionRequest.userId],
 		references: [userMaster.userId]
 	}),
 	redemptionRewardLines: many(redemptionRewardLines),
+}));
+
+export const transactionRelations = relations(transaction, ({one}) => ({
+	userMaster: one(userMaster, {
+		fields: [transaction.userId],
+		references: [userMaster.userId]
+	}),
 }));
 
 export const distributorRelations = relations(distributor, ({one, many}) => ({

@@ -474,9 +474,9 @@ export default function LoyaltySchemesPage() {
                     required
                   >
                     <option value="">Select</option>
-                    <option value="1">Sales</option>
+                    <option value="3">Sales</option>
                     <option value="2">Distributor</option>
-                    <option value="3">Retailer</option>
+                    <option value="1">Retailer</option>
                   </select>
                 </div>
                 {/* Image/PDF URL */}

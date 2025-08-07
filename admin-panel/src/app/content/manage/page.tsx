@@ -1,7 +1,6 @@
 'use client';
 
 import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
 import { useEffect, useState } from "react";
 import { showErrorToast } from "@/components/toastProvider";
 import { handleError } from "@/utils/errorHandler";
@@ -22,7 +21,10 @@ export default function ContentManagementPage() {
     content: '',
     imagePdfUrl: '',
   });
-  const [file, setFile] = useState<File | null>(null);
+  const [file, setFile] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
+  const [previewFile, setPreviewFile] = useState(null); // New state for preview image
+  const [previewFileUrl, setPreviewFileUrl] = useState(null); // New state for preview image URL
   const rowsPerPage = 10;
   const contentTypes = [
     { label: 'PRODUCT_CATALOG', value: 'PRODUCT_CATALOG' },
@@ -49,7 +51,6 @@ export default function ContentManagementPage() {
         }
 
         setData(result);
-        console.log(data, "daaataaa")
       } catch (error) {
         const { message } = handleError(error, "Content Management");
         setError(message);
@@ -64,19 +65,33 @@ export default function ContentManagementPage() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    console.log(name, value,"cdcdscdwecw");
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e) => {
     const selectedFile = e.target.files?.[0];
-    console.log("sdcdscdc",selectedFile)
     if (selectedFile && (selectedFile.type.startsWith('image/') || selectedFile.type === 'application/pdf')) {
       setFile(selectedFile);
       setFormData((prev) => ({ ...prev, imagePdfUrl: '' }));
+      const previewUrl = URL.createObjectURL(selectedFile);
+      setFilePreview(previewUrl);
     } else {
       showErrorToast('Please select an image or PDF file');
       setFile(null);
+      setFilePreview(null);
+    }
+  };
+
+  const handlePreviewFileChange = (e) => {
+    const selectedPreviewFile = e.target.files?.[0];
+    if (selectedPreviewFile && selectedPreviewFile.type.match(/\.(jpeg|jpg|png)$/i)) {
+      setPreviewFile(selectedPreviewFile);
+      const previewUrl = URL.createObjectURL(selectedPreviewFile);
+      setPreviewFileUrl(previewUrl);
+    } else {
+      showErrorToast('Please select a JPG or PNG file for preview');
+      setPreviewFile(null);
+      setPreviewFileUrl(null);
     }
   };
 
@@ -91,20 +106,19 @@ export default function ContentManagementPage() {
       const formDataToSend = new FormData();
       formDataToSend.append('contentType', formData.contentType);
       formDataToSend.append('content', formData.content);
-      formDataToSend.append('file', file as any);
       if (file) {
-        console.log("file")
         formDataToSend.append('file', file);
       } else if (formData.imagePdfUrl) {
-        console.log("fileURl")
         formDataToSend.append('imagePdfUrl', formData.imagePdfUrl);
+      }
+      if (previewFile) {
+        formDataToSend.append('preview', previewFile);
       }
 
       const res = await fetch(url, {
         method,
         headers: {
           Authorization: `Bearer ${session.user.id}`,
-          // 'Content-Type': "multipart/form-data",
         },
         body: formDataToSend,
       });
@@ -119,7 +133,9 @@ export default function ContentManagementPage() {
       setIsModalOpen(false);
       setFormData({ contentType: '', content: '', imagePdfUrl: '' });
       setFile(null);
-      setSelectedContent(null);
+      setFilePreview(null);
+      setPreviewFile(null);
+      setPreviewFileUrl(null);
 
       // Refresh data
       const fetchRes = await fetch('/api/content-management', {
@@ -141,6 +157,9 @@ export default function ContentManagementPage() {
       imagePdfUrl: content.imagePdfUrl || '',
     });
     setFile(null);
+    setFilePreview(content.imagePdfUrl || null);
+    setPreviewFile(null);
+    setPreviewFileUrl(content.previewImageUrl || null); // Assuming previewImageUrl from API
     setIsModalOpen(true);
   };
 
@@ -177,13 +196,24 @@ export default function ContentManagementPage() {
     }
   };
 
+  // Clean up preview URLs
+  useEffect(() => {
+    return () => {
+      if (filePreview) {
+        URL.revokeObjectURL(filePreview);
+      }
+      if (previewFileUrl) {
+        URL.revokeObjectURL(previewFileUrl);
+      }
+    };
+  }, [filePreview, previewFileUrl]);
+
   // Pagination logic
   const totalPages = Math.ceil(data.length / rowsPerPage);
   const startIndex = (currentPage - 1) * rowsPerPage;
   const endIndex = startIndex + rowsPerPage;
   const paginatedData = data.slice(startIndex, endIndex);
 
-  // Generate truncated page buttons
   const getPageNumbers = () => {
     const maxButtons = 5;
     const buttons = [];
@@ -259,6 +289,9 @@ export default function ContentManagementPage() {
                     setSelectedContent(null);
                     setFormData({ contentType: '', content: '', imagePdfUrl: '' });
                     setFile(null);
+                    setFilePreview(null);
+                    setPreviewFile(null);
+                    setPreviewFileUrl(null);
                     setIsModalOpen(true);
                   }}
                   className="btn btn-primary btn-sm rounded-btn bg-gradient-to-r from-primary to-secondary text-primary-content border-none hover:from-primary-focus hover:to-secondary-focus hover:scale-110 transition-all duration-300"
@@ -276,7 +309,6 @@ export default function ContentManagementPage() {
                       <th className="text-sm md:text-base">Content</th>
                       <th className="text-sm md:text-base">Image/PDF URL</th>
                       <th className="text-sm md:text-base">Last Updated</th>
-                      {/* <th className="text-sm md:text-base">Actions</th> */}
                     </tr>
                   </thead>
                   <tbody>
@@ -296,31 +328,13 @@ export default function ContentManagementPage() {
                           ) : '-'}
                         </td>
                         <td className="text-sm md:text-base">{new Date(item.lastUpdatedAt).toLocaleString()}</td>
-                        {/* <td className="text-sm md:text-base">
-                          <button
-                            onClick={() => handleEdit(item)}
-                            className="btn btn-ghost btn-sm text-primary hover:bg-primary/20 mr-2"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => {
-                              setDeleteContentId(item.contentId);
-                              setIsDeleteModalOpen(true);
-                            }}
-                            className="btn btn-ghost btn-sm text-error hover:bg-error/20"
-                          >
-                            Delete
-                          </button>
-                        </td> */}
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              {/* Pagination Controls */}
               {totalPages > 1 && (
-                <div className="flex flex-col sm:flex-row justify_between items_center mt_6 gap_4">
+                <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4">
                   <div className="text-sm text-base-content opacity-70">
                     Showing {startIndex + 1} to {Math.min(endIndex, data.length)} of {data.length} entries
                   </div>
@@ -360,7 +374,6 @@ export default function ContentManagementPage() {
             </div>
           </div>
 
-          {/* Edit/Create Modal */}
           <input type="checkbox" id="content-modal" className="modal-toggle" checked={isModalOpen} onChange={() => setIsModalOpen(!isModalOpen)} />
           <div className="modal">
             <div className="modal-box bg-base-100">
@@ -388,7 +401,7 @@ export default function ContentManagementPage() {
                     name="contentType"
                     className="select select-bordered w-full"
                     value={formData.contentType}
-                    onChange={handleInputChange} // Use your normal handler
+                    onChange={handleInputChange}
                     required
                   >
                     <option value="" disabled>Select content type</option>
@@ -420,6 +433,82 @@ export default function ContentManagementPage() {
                     </p>
                   )}
                 </div>
+                {(filePreview || (formData.imagePdfUrl && !file)) && (
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Main File Preview</span>
+                    </label>
+                    <div className="border rounded-lg p-2 bg-base-200 max-h-64 overflow-auto">
+                      {filePreview && file?.type.startsWith('image/') && (
+                        <img
+                          src={filePreview}
+                          alt="Main File Preview"
+                          className="max-w-full h-auto max-h-48 object-contain"
+                        />
+                      )}
+                      {filePreview && file?.type === 'application/pdf' && (
+                        <embed
+                          src={filePreview}
+                          type="application/pdf"
+                          width="100%"
+                          height="300px"
+                          className="min-h-[200px]"
+                        />
+                      )}
+                      {!file && formData.imagePdfUrl && (
+                        <>
+                          {formData.imagePdfUrl.match(/\.(jpeg|jpg|png|gif)$/i) ? (
+                            <img
+                              src={formData.imagePdfUrl}
+                              alt="Main File Preview"
+                              className="max-w-full h-auto max-h-48 object-contain"
+                            />
+                          ) : formData.imagePdfUrl.match(/\.pdf$/i) ? (
+                            <embed
+                              src={formData.imagePdfUrl}
+                              type="application/pdf"
+                              width="100%"
+                              height="300px"
+                              className="min-h-[200px]"
+                            />
+                          ) : (
+                            <p className="text-sm text-gray-600">Preview not available for this URL</p>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Preview Image (JPG/PNG)</span>
+                  </label>
+                  <input
+                    type="file"
+                    className="file-input file-input-bordered w-full"
+                    accept="image/jpeg,image/png"
+                    onChange={handlePreviewFileChange}
+                  />
+                  {previewFile && (
+                    <p className="mt-2 text-sm text-gray-600">
+                      Selected: {previewFile.name}
+                    </p>
+                  )}
+                </div>
+                {previewFileUrl && (
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Preview Image</span>
+                    </label>
+                    <div className="border rounded-lg p-2 bg-base-200 max-h-64 overflow-auto">
+                      <img
+                        src={previewFileUrl}
+                        alt="Preview Image"
+                        className="max-w-full h-auto max-h-48 object-contain"
+                      />
+                    </div>
+                  </div>
+                )}
                 <div className="modal-action">
                   <button
                     type="submit"
@@ -432,6 +521,15 @@ export default function ContentManagementPage() {
                     onClick={() => {
                       setIsModalOpen(false);
                       setFile(null);
+                      setFilePreview(null);
+                      setPreviewFile(null);
+                      setPreviewFileUrl(null);
+                      if (filePreview) {
+                        URL.revokeObjectURL(filePreview);
+                      }
+                      if (previewFileUrl) {
+                        URL.revokeObjectURL(previewFileUrl);
+                      }
                     }}
                     className="btn btn-ghost"
                   >
@@ -442,7 +540,6 @@ export default function ContentManagementPage() {
             </div>
           </div>
 
-          {/* Delete Confirmation Modal */}
           <input type="checkbox" id="delete-modal" className="modal-toggle" checked={isDeleteModalOpen} onChange={() => setIsDeleteModalOpen(!isDeleteModalOpen)} />
           <div className="modal">
             <div className="modal-box bg-base-100">
