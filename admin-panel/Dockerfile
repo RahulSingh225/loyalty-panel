@@ -29,6 +29,6 @@ EXPOSE 4000
 # Environment variables
 ENV NODE_ENV=production
 ENV PORT=4000
-
+ENV NEXT_TELEMETRY_DISABLED=1
 # Start the Next.js app
 CMD ["node", "server.js"]

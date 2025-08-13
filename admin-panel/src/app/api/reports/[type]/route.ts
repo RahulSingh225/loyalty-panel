@@ -28,6 +28,7 @@ export async function GET(request: Request, context: { params: Promise<{ type: s
             id: userMaster.userId,
             username: userMaster.username,
             loginTime: userMaster.updatedAt,
+            userType: userMaster.userType,
           })
           .from(userMaster)
           .where(
@@ -52,6 +53,7 @@ export async function GET(request: Request, context: { params: Promise<{ type: s
             id: retailer.userId,
             username: retailer.shopName,
             mobileNumber: retailer.whatsappNo,
+            
             enrolledAt: retailer.createdAt,
           })
           .from(retailer)
@@ -74,10 +76,11 @@ export async function GET(request: Request, context: { params: Promise<{ type: s
       case "point-transfer":
         data = await db
           .select({
-            id: pointAllocationLog.allocationId,
+            id: pointAllocationLog.documentNo,
             username: userMaster.username,
             points: pointAllocationLog.pointsAllocated,
             transferDate: pointAllocationLog.allocationDate,
+            
           })
           .from(pointAllocationLog)
           .innerJoin(userMaster, eq(pointAllocationLog.targetUserId, userMaster.userId))
@@ -100,7 +103,7 @@ export async function GET(request: Request, context: { params: Promise<{ type: s
       case "claim":
         data = await db
           .select({
-            id: redemptionRequest.requestId,
+            id: redemptionRequest.redemptionId,
             username: userMaster.username,
             status: redemptionRequest.status,
             claimDate: redemptionRequest.requestDate,

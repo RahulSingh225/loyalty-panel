@@ -229,7 +229,12 @@ export default function ReportPage() {
                     <tr>
                       <th>ID</th>
                       <th>Username</th>
-                      {params.type === "login" && <th>Login Time</th>}
+                      {params.type === "login" && (
+                        <>
+                          <th>User Type</th>
+                          <th>Login Time</th>
+                        </>
+                      )}
                       {params.type === "enrollment" && (
                         <>
                           <th>Mobile Number</th>
@@ -255,7 +260,13 @@ export default function ReportPage() {
                       <tr key={item.id} className="hover">
                         <td>{item.id}</td>
                         <td>{item.username}</td>
-                        {params.type === "login" && <td>{item.loginTime}</td>}
+                        {params.type === "login" && (
+                          <>
+                          <td>{item.userType}</td>
+                          <td>{item.loginTime}</td>
+                      </>
+                      
+                      )}
                         {params.type === "enrollment" && (
                           <>
                             <td>{item.mobileNumber}</td>

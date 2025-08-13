@@ -6,6 +6,7 @@ import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
 import Link from "next/link";
+import Image from "next/image";
 import { redirect } from "next/dist/server/api-utils";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -30,15 +31,16 @@ export default async function RootLayout({
           <ToastProvider />
             {session?.user && (
             <div className="navbar bg-base-100 shadow-md">
-              <div className="flex-1">
-  <a href="/dashboard" className="btn btn-ghost normal-case text-xl">
-    <span className="mr-2">
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M13 5v6h6m-6 0v6m0 0H7m6 0h6" />
-      </svg>
-    </span>
-    Talkk Loyalty
-  </a>
+      <div className="flex-1">   
+  <a href="/dashboard" className="btn btn-ghost normal-case">     
+    <Image 
+      src="/talkk-logo.webp" 
+      alt="Talkk Loyalty" 
+      width={200}
+      height={100}
+      className="inline-block"
+    />
+  </a> 
 </div>
               <div className="flex-none gap-2">
               <ThemeSwitcher />

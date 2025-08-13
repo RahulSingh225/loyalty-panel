@@ -1,15 +1,43 @@
+// app/dashboard/page.tsx
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { toast } from "react-toastify";
-import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
+import DashboardStats from "@/components/dashboardStats";
+
+// Define API response type
+interface DashboardResponse {
+  total_retailers: number;
+  total_distributors: number;
+  total_salesperson: number;
+}
 
 export default async function DashboardPage() {
   const session = await auth();
 
-  if (!session?.user ) {
+  if (!session?.user) {
     redirect("/login");
+  }
+
+  // Fetch dashboard data
+  let stats: DashboardResponse = { total_retailers: 0, total_distributors: 0, total_salesperson: 0 };
+  let error: string | undefined;
+
+  try {
+    const response = await fetch(`${process.env.NEXTAUTH_URL}/api/dashboard`, {
+      cache: 'no-store', // Ensure fresh data
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch dashboard data');
+    }
+
+    const data: DashboardResponse = await response.json();
+    stats = data;
+  } catch (err) {
+    console.error('Error fetching dashboard data:', err);
+    error = 'Unable to load dashboard statistics. Please try again later.';
   }
 
   return (
@@ -20,24 +48,18 @@ export default async function DashboardPage() {
           <div className="hero-overlay bg-opacity-20"></div>
           <div className="hero-content text-center py-12">
             <div className="max-w-xl">
-              <h1 className=" text-4xl md:text-5xl font-bold tracking-tight mb-6 animate-fade-in-down">Welcome to Talkk Loyalty!</h1>
+              <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-6 animate-fade-in-down">
+                Welcome to Talkk Loyalty!
+              </h1>
               <p className="text-lg md:text-xl opacity-90 leading-relaxed mb-8 animate-fade-in-up">
                 Streamline your loyalty program with intuitive admin tools and in-depth analytics.
               </p>
-              <div className="stats stats-horizontal bg-base-100 text-base-content shadow rounded-box">
-                <div className="stat px-4 py-3 md:px-6 md:py-4 hover:bg-base-200 transition-colors duration-300">
-                  <div className="stat-title text-sm md:text-base">Total Members</div>
-                  <div className="stat-value text-xl md:text-2xl">1,234</div>
-                </div>
-                <div className="stat px-4 py-3 md:px-6 md:py-4 hover:bg-base-200 transition-colors duration-300">
-                  <div className="stat-title text-sm md:text-base">Active Sessions</div>
-                  <div className="stat-value text-xl md:text-2xl">89</div>
-                </div>
-                <div className="stat px-4 py-3 md:px-6 md:py-4 hover:bg-base-200 transition-colors duration-300">
-                  <div className="stat-title text-sm md:text-base">Reports</div>
-                  <div className="stat-value text-xl md:text-2xl">4</div>
-                </div>
-              </div>
+              <DashboardStats
+                total_retailers={stats.total_retailers}
+                total_distributors={stats.total_distributors}
+                total_salesperson={stats.total_salesperson}
+                error={error}
+              />
             </div>
           </div>
         </div>
@@ -54,7 +76,7 @@ export default async function DashboardPage() {
                 <div className="card-actions justify-end mt-4">
                   <Link
                     href="/reports/login"
-                    className="button"
+                    className="btn btn-primary btn-sm rounded-btn bg-gradient-to-r from-primary to-secondary text-primary-content border-none hover:from-primary-focus hover:to-secondary-focus hover:scale-110 transition-all duration-300"
                   >
                     View Report
                   </Link>
