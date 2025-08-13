@@ -61,7 +61,7 @@ export default function CommunicationsPage() {
       };
 
       // Send notification via API
-      const res = await fetch('/api/communication', {
+      const res = await fetch('/nextapi/communication', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

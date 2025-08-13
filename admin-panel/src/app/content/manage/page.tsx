@@ -38,7 +38,7 @@ export default function ContentManagementPage() {
           throw new Error("User session is not available.");
         }
 
-        const res = await fetch('/api/content-management', {
+        const res = await fetch('/nextapi/content-management', {
           headers: {
             Authorization: `Bearer ${session.user.id}`,
           },
@@ -101,7 +101,7 @@ export default function ContentManagementPage() {
       const method = selectedContent ? 'PUT' : 'POST';
       const url = selectedContent
         ? `/api/content-management/${selectedContent.contentId}`
-        : '/api/content-management';
+        : '/nextapi/content-management';
 
       const formDataToSend = new FormData();
       formDataToSend.append('contentType', formData.contentType);
@@ -138,7 +138,7 @@ export default function ContentManagementPage() {
       setPreviewFileUrl(null);
 
       // Refresh data
-      const fetchRes = await fetch('/api/content-management', {
+      const fetchRes = await fetch('/nextapi/content-management', {
         headers: { Authorization: `Bearer ${session.user.id}` },
       });
       const newData = await fetchRes.json();
@@ -179,7 +179,7 @@ export default function ContentManagementPage() {
       setDeleteContentId(null);
 
       // Refresh data
-      const fetchRes = await fetch('/api/content-management', {
+      const fetchRes = await fetch('/nextapi/content-management', {
         headers: { Authorization: `Bearer ${session.user.id}` },
       });
       const newData = await fetchRes.json();

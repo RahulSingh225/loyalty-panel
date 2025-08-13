@@ -1,5 +1,5 @@
 # Stage 1: Build the Next.js app with TypeScript
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
 # Install only production dependencies for the build
@@ -11,7 +11,7 @@ COPY . .
 RUN npm run build --standalone
 
 # Stage 2: Create production image
-FROM node:18-alpine
+FROM node:20-alpine
 WORKDIR /app
 # Install only production dependencies
 COPY package*.json ./

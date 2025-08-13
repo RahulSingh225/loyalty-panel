@@ -25,7 +25,7 @@ export default async function DashboardPage() {
   let error: string | undefined;
 
   try {
-    const response = await fetch(`${process.env.NEXTAUTH_URL}/api/dashboard`, {
+    const response = await fetch(`${process.env.NEXTAUTH_URL}/nextapi/dashboard`, {
       cache: 'no-store', // Ensure fresh data
     });
 

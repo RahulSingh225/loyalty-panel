@@ -32,7 +32,7 @@ export default function ReportPage() {
         if (startDate) queryParams.append('startDate', startDate);
         if (endDate) queryParams.append('endDate', endDate);
 
-        const res = await fetch(`/api/reports/${params.type}?${queryParams.toString()}`, {
+        const res = await fetch(`/nextapi/reports/${params.type}?${queryParams.toString()}`, {
           headers: {
             Authorization: `Bearer ${session.user.id}`,
           },

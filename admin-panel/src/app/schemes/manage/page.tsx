@@ -37,7 +37,7 @@ export default function LoyaltySchemesPage() {
           throw new Error('User session is not available.');
         }
 
-        const res = await fetch('/api/schemes', {
+        const res = await fetch('/nextapi/schemes', {
           headers: {
             Authorization: `Bearer ${session.user.id}`,
           },
@@ -97,7 +97,7 @@ export default function LoyaltySchemesPage() {
     e.preventDefault();
     try {
       const method = selectedScheme ? 'PUT' : 'POST';
-      const url = selectedScheme ? `/api/schemes/${selectedScheme.schemeId}` : '/api/schemes';
+      const url = selectedScheme ? `/api/schemes/${selectedScheme.schemeId}` : '/nextapi/schemes';
 
       const form = new FormData();
       form.append('schemeName', formData.schemeName);
@@ -145,7 +145,7 @@ export default function LoyaltySchemesPage() {
       }
 
       // Refresh data
-      const fetchRes = await fetch('/api/schemes', {
+      const fetchRes = await fetch('/nextapi/schemes', {
         headers: { Authorization: `Bearer ${session.user.id}` },
       });
       const newData = await fetchRes.json();
@@ -192,7 +192,7 @@ export default function LoyaltySchemesPage() {
       setDeleteSchemeId(null);
 
       // Refresh data
-      const fetchRes = await fetch('/api/schemes', {
+      const fetchRes = await fetch('/nextapi/schemes', {
         headers: { Authorization: `Bearer ${session.user.id}` },
       });
       const newData = await fetchRes.json();
