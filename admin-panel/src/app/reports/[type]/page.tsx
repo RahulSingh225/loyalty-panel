@@ -20,6 +20,8 @@ export default function ReportPage() {
   const rowsPerPage = 10;
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
+    const [refNo, setRefNo] = useState<string>('');
+    const [mobileFilter, setMobileFilter] = useState<string>('');
 
   useEffect(() => {
     async function fetchData() {
@@ -31,6 +33,9 @@ export default function ReportPage() {
         const queryParams = new URLSearchParams();
         if (startDate) queryParams.append('startDate', startDate);
         if (endDate) queryParams.append('endDate', endDate);
+
+        if (refNo) queryParams.append('refNo', refNo);
+        if (mobileFilter) queryParams.append('mobileNumber', mobileFilter);
 
         const res = await fetch(`/nextapi/reports/${params.type}?${queryParams.toString()}`, {
           headers: {
@@ -54,7 +59,7 @@ export default function ReportPage() {
     }
 
     fetchData();
-  }, [params.type, session, startDate, endDate]);
+  }, [params.type, session, startDate, endDate,refNo,mobileFilter]);
 
   useEffect(() => {
     let filtered = data;
@@ -198,29 +203,61 @@ export default function ReportPage() {
                   {params.type} Report
                 </h1>
               </div>
+            
               <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                <div className="form-control flex-1">
-                  <label className="label">
-                    <span className="label-text">Start Date</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="input input-bordered w-full"
-                  />
-                </div>
-                <div className="form-control flex-1">
-                  <label className="label">
-                    <span className="label-text">End Date</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="input input-bordered w-full"
-                  />
-                </div>
+                {(params.type === "agents" || params.type === "salesperson" || params.type === "retailers") ? (
+                  <>
+                    <div className="form-control flex-1">
+                      <label className="label">
+                        <span className="label-text">Ref No</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={refNo}
+                        onChange={(e) => setRefNo(e.target.value)}
+                        className="input input-bordered w-full"
+                        placeholder="Enter Ref No"
+                      />
+                    </div>
+                    <div className="form-control flex-1">
+                      <label className="label">
+                        <span className="label-text">Mobile Number</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={mobileFilter}
+                        onChange={(e) => setMobileFilter(e.target.value)}
+                        className="input input-bordered w-full"
+                        placeholder="Enter Mobile Number"
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="form-control flex-1">
+                      <label className="label">
+                        <span className="label-text">Start Date</span>
+                      </label>
+                      <input
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className="input input-bordered w-full"
+                      />
+                    </div>
+                    <div className="form-control flex-1">
+                      <label className="label">
+                        <span className="label-text">End Date</span>
+                      </label>
+                      <input
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        className="input input-bordered w-full"
+                      />
+                    </div>
+                  </>
+                )}
               </div>
               <div className="divider"></div>
               <div className="overflow-x-auto">
@@ -229,30 +266,39 @@ export default function ReportPage() {
                     <tr>
                       <th>ID</th>
                       <th>Username</th>
-                      {params.type === "login" && (
-                        <>
-                          <th>User Type</th>
-                          <th>Login Time</th>
-                        </>
-                      )}
-                      {params.type === "enrollment" && (
-                        <>
-                          <th>Mobile Number</th>
-                          <th>Enrolled At</th>
-                        </>
-                      )}
-                      {params.type === "point-transfer" && (
-                        <>
-                          <th>Points</th>
-                          <th>Transfer Date</th>
-                        </>
-                      )}
-                      {params.type === "claim" && (
-                        <>
-                          <th>Status</th>
-                          <th>Claim Date</th>
-                        </>
-                      )}
+                        {params.type === "login" && (
+                          <>
+                            <th>User Type</th>
+                            <th>Login Time</th>
+                          </>
+                        )}
+                        {params.type === "enrollment" && (
+                          <>
+                            <th>Mobile Number</th>
+                            <th>Enrolled At</th>
+                          </>
+                        )}
+                        {params.type === "point-transfer" && (
+                          <>
+                            <th>Points</th>
+                            <th>Transfer Date</th>
+                          </>
+                        )}
+                        {params.type === "claim" && (
+                          <>
+                            <th>Status</th>
+                            <th>Claim Date</th>
+                          </>
+                        )}
+                        {(params.type === "retailers" || params.type === "agents" || params.type === "salesperson") && (
+                          <>
+                            <th>Mobile Number</th>
+                            <th>Created At</th>
+                            {paginatedData.length > 0 && Object.keys(paginatedData[0]).filter(key => !['username','mobileNumber','createdAt'].includes(key)).map(key => (
+                              <th key={key}>{key}</th>
+                            ))}
+                          </>
+                        )}
                     </tr>
                   </thead>
                   <tbody>
@@ -260,31 +306,39 @@ export default function ReportPage() {
                       <tr key={item.id} className="hover">
                         <td>{item.id}</td>
                         <td>{item.username}</td>
-                        {params.type === "login" && (
-                          <>
-                          <td>{item.userType}</td>
-                          <td>{item.loginTime}</td>
-                      </>
-                      
-                      )}
-                        {params.type === "enrollment" && (
-                          <>
-                            <td>{item.mobileNumber}</td>
-                            <td>{item.enrolledAt}</td>
-                          </>
-                        )}
-                        {params.type === "point-transfer" && (
-                          <>
-                            <td>{item.points}</td>
-                            <td>{item.transferDate}</td>
-                          </>
-                        )}
-                        {params.type === "claim" && (
-                          <>
-                            <td>{item.status}</td>
-                            <td>{item.claimDate}</td>
-                          </>
-                        )}
+                          {params.type === "login" && (
+                            <>
+                              <td>{item.userType}</td>
+                              <td>{item.loginTime}</td>
+                            </>
+                          )}
+                          {params.type === "enrollment" && (
+                            <>
+                              <td>{item.mobileNumber}</td>
+                              <td>{item.enrolledAt}</td>
+                            </>
+                          )}
+                          {params.type === "point-transfer" && (
+                            <>
+                              <td>{item.points}</td>
+                              <td>{item.transferDate}</td>
+                            </>
+                          )}
+                          {params.type === "claim" && (
+                            <>
+                              <td>{item.status}</td>
+                              <td>{item.claimDate}</td>
+                            </>
+                          )}
+                          {(params.type === "retailers" || params.type === "agents" || params.type === "salesperson") && (
+                            <>
+                              <td>{item.mobileNumber}</td>
+                              <td>{item.createdAt}</td>
+                              {Object.keys(item).filter(key => !['username','mobileNumber','createdAt'].includes(key)).map(key => (
+                                <td key={key}>{String(item[key])}</td>
+                              ))}
+                            </>
+                          )}
                       </tr>
                     ))}
                   </tbody>

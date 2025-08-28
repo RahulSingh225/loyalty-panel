@@ -1,8 +1,9 @@
+import { salesperson } from "@/db/schema";
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { auth } from "@/auth";
 import { desc, eq, and, gte, lte } from "drizzle-orm";
-import { userMaster } from "@/db/schema";
+import { distributor, userMaster } from "@/db/schema";
 import { retailer } from "@/db/schema";
 import { pointAllocationLog } from "@/db/schema";
 import { redemptionRequest } from "@/db/schema";
@@ -18,7 +19,8 @@ export async function GET(request: Request, context: { params: Promise<{ type: s
   const { searchParams } = new URL(request.url);
   const startDate = searchParams.get('startDate');
   const endDate = searchParams.get('endDate');
-
+  const refNo = searchParams.get('refNo');
+  const mobileNumber = searchParams.get('mobileNumber');
   try {
     let data;
     switch (type) {
@@ -44,6 +46,85 @@ export async function GET(request: Request, context: { params: Promise<{ type: s
               loginTime: row.loginTime
                 ? moment(row.loginTime).format('LLL')
                 : null,
+            }))
+          );
+        break;
+      case "retailers":
+        data = await db
+          .select({
+            refno: retailer.navisionId,
+            username: userMaster.username,
+            mobileNumber: userMaster.mobileNumber,
+            total_points: retailer.totalPoints,
+            balance_points: retailer.balancePoints,
+            consumed_points: retailer.consumedPoints,
+            createdAt: userMaster.createdAt,
+          })
+          .from(userMaster)
+          .innerJoin(retailer, eq(userMaster.userId, retailer.userId))
+          .where(
+            and(
+              eq(userMaster.userType, 'retailer'),
+              mobileNumber ? eq(userMaster.mobileNumber, mobileNumber) : undefined,
+              refNo ? eq(retailer.navisionId, refNo) : undefined
+            )
+          )
+          .orderBy(desc(userMaster.createdAt))
+          .then((rows) =>
+            rows.map((row) => ({
+              ...row,
+              createdAt: row.createdAt ? moment(row.createdAt).format('LLL') : null,
+            }))
+          );
+        break;
+      case "agents":
+        data = await db
+          .select({
+            refno: distributor.navisionId,
+            username: userMaster.username,
+            mobileNumber: distributor.phoneNumber,
+            total_points: distributor.totalPoints,
+            balance_points: distributor.balancePoints,
+            consumed_points: distributor.consumedPoints,
+            createdAt: distributor.createdAt,
+          })
+          .from(distributor)
+          .innerJoin(userMaster, eq(distributor.userId, userMaster.userId))
+          .where(
+            and(
+              mobileNumber ? eq(distributor.phoneNumber, mobileNumber) : undefined,
+              refNo ? eq(distributor.navisionId, refNo) : undefined
+            )
+          )
+          .orderBy(desc(distributor.createdAt))
+          .then((rows) =>
+            rows.map((row) => ({
+              ...row,
+              createdAt: row.createdAt ? moment(row.createdAt).format('LLL') : null,
+            }))
+          );
+        break;
+      case "salesperson":
+        data = await db
+          .select({
+            refno: salesperson.navisionId,
+            username: userMaster.username,
+            mobileNumber: salesperson.mobileNumber,
+            createdAt: salesperson.createdAt,
+          })
+          .from(salesperson)
+          .innerJoin(userMaster, eq(salesperson.userId, userMaster.userId))
+          .where(
+            and(
+              mobileNumber ? eq(salesperson.mobileNumber, mobileNumber) : undefined,
+              refNo ? eq(salesperson.navisionId, refNo) : undefined
+            )
+          )
+          .orderBy(desc(salesperson.createdAt))
+          .then((rows) =>
+            rows.map((row) => ({
+              ...row,
+              createdAt: row.createdAt ? moment(row.createdAt).format('LLL') : null,
             }))
           );
         break;
