@@ -1,4 +1,5 @@
 
+
 import { fileService } from '@/app/services/file.service';
 import { auth } from '@/auth';
 import { db } from '@/db';
@@ -85,7 +86,7 @@ export async function POST(req: NextRequest) {
     if (previewFile) {
       const arrayBuffer = await previewFile.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
-       previewFilePath = `RANJIT/${formData.get("contentType")}/${previewFile.name}`;
+       previewFilePath = `RANJIT/${formData.get("contentType")}/${previewFile?.name}`;
       previewFileUrl = await fileService.upload(buffer, previewFilePath);
     }
 
@@ -97,8 +98,8 @@ export async function POST(req: NextRequest) {
         
         contentType: formData.get("contentType") as string,
         content: formData.get("content") as string,
-        imagePdfUrl: fileUrl,
-        preview: previewFilePath || "", // Store preview image URL
+        imagePdfUrl: file.name,
+        preview: previewFile?.name || "", // Store preview image URL
       
       });
     });
@@ -106,6 +107,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: "Content created successfully" }, { status: 201 });
   } catch (error) {
     console.error(error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "admin") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const { searchParams } = new URL(req.url);
+    const contentId = Number(searchParams.get("contentId"));
+    if (!contentId) {
+      return NextResponse.json({ error: "Invalid content ID" }, { status: 400 });
+    }
+    await db.delete(contentManagement).where(eq(contentManagement.contentId, contentId));
+    return NextResponse.json({ message: "Content deleted successfully" }, { status: 200 });
+  } catch (error) {
+    console.log(error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

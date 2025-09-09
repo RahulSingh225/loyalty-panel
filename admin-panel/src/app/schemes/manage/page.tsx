@@ -178,7 +178,7 @@ export default function LoyaltySchemesPage() {
 
   const handleDelete = async () => {
     try {
-      const res = await fetch(`/api/schemes/${deleteSchemeId}`, {
+      const res = await fetch(`/nextapi/schemes?schemeId=${deleteSchemeId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${session.user.id}` },
       });
@@ -329,15 +329,12 @@ export default function LoyaltySchemesPage() {
                       <th className="text-sm md:text-base">End Date</th>
                       <th className="text-sm md:text-base">Created At</th>
                       <th className="text-sm md:text-base">Preview</th>
-                      {/* <th className="text-sm md:text-base">Action</th> */}
+                      <th className="text-sm md:text-base">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {paginatedData.map((item) => (
-                      <tr
-                        key={item.schemeId}
-                        className="hover:bg-gradient-to-r hover:from-primary/10 hover:to-secondary/10 hover:scale-[1.02] transition-all duration-300"
-                      >
+                      <tr key={item.schemeId}>
                         <td className="text-sm md:text-base">{item.schemeId}</td>
                         <td className="text-sm md:text-base">{item.schemeName}</td>
                         <td className="text-sm md:text-base">{item.isActive ? 'Yes' : 'No'}</td>
@@ -369,23 +366,17 @@ export default function LoyaltySchemesPage() {
                             </a>
                           ) : '-'}
                         </td>
-                        {/* <td className="text-sm md:text-base">
+                        <td className="text-sm md:text-base">
                           <button
-                            onClick={() => handleEdit(item)}
-                            className="btn btn-ghost btn-sm text-primary hover:bg-primary/20 mr-2"
-                          >
-                            Edit
-                          </button>
-                          <button
+                            className="btn btn-error btn-xs"
                             onClick={() => {
                               setDeleteSchemeId(item.schemeId);
                               setIsDeleteModalOpen(true);
                             }}
-                            className="btn btn-ghost btn-sm text-error hover:bg-error/20"
                           >
-                            Delete
+                            Remove
                           </button>
-                        </td> */}
+                        </td>
                       </tr>
                     ))}
                   </tbody>

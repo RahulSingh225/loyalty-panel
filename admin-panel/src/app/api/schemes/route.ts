@@ -140,3 +140,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+// DELETE: Delete a scheme by schemeId
+export async function DELETE(req: NextRequest) {
+  const session = await auth();
+  if (!session?.user || session.user.role !== 'admin') {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const { searchParams } = new URL(req.url);
+    const schemeId = Number(searchParams.get('schemeId'));
+    if (!schemeId) {
+      return NextResponse.json({ error: 'Invalid scheme ID' }, { status: 400 });
+    }
+    await db.delete(schemes).where(sql`scheme_id = ${schemeId}`);
+    return NextResponse.json({ message: 'Scheme deleted successfully' }, { status: 200 });
+  } catch (error) {
+    console.error('Delete Error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}

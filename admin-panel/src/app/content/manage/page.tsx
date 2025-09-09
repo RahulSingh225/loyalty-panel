@@ -84,12 +84,13 @@ export default function ContentManagementPage() {
 
   const handlePreviewFileChange = (e) => {
     const selectedPreviewFile = e.target.files?.[0];
-    if (selectedPreviewFile && selectedPreviewFile.type.match(/\.(jpeg|jpg|png)$/i)) {
+    if (selectedPreviewFile && selectedPreviewFile.type.startsWith('image/')) {
       setPreviewFile(selectedPreviewFile);
       const previewUrl = URL.createObjectURL(selectedPreviewFile);
       setPreviewFileUrl(previewUrl);
     } else {
-      showErrorToast('Please select a JPG or PNG file for preview');
+      
+      showErrorToast('Please select a JPG or PNG file for preview current is '+(selectedPreviewFile.type));
       setPreviewFile(null);
       setPreviewFileUrl(null);
     }
@@ -165,7 +166,7 @@ export default function ContentManagementPage() {
 
   const handleDelete = async () => {
     try {
-      const res = await fetch(`/api/content-management/${deleteContentId}`, {
+      const res = await fetch(`/nextapi/content-management?contentId=${deleteContentId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${session.user.id}` },
       });
@@ -309,6 +310,7 @@ export default function ContentManagementPage() {
                       <th className="text-sm md:text-base">Content</th>
                       <th className="text-sm md:text-base">Image/PDF URL</th>
                       <th className="text-sm md:text-base">Last Updated</th>
+                      <th className="text-sm md:text-base">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -328,6 +330,17 @@ export default function ContentManagementPage() {
                           ) : '-'}
                         </td>
                         <td className="text-sm md:text-base">{new Date(item.lastUpdatedAt).toLocaleString()}</td>
+                        <td className="text-sm md:text-base">
+                          <button
+                            className="btn btn-error btn-xs"
+                            onClick={() => {
+                              setDeleteContentId(item.contentId);
+                              setIsDeleteModalOpen(true);
+                            }}
+                          >
+                            Remove
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
