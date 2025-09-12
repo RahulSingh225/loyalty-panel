@@ -8,6 +8,7 @@ import { retailer } from "@/db/schema";
 import { pointAllocationLog } from "@/db/schema";
 import { redemptionRequest } from "@/db/schema";
 import moment from "moment";
+import { fchmod } from "fs";
 
 export async function GET(request: Request, context: { params: Promise<{ type: string }> }) {
   const session = await auth();
@@ -59,6 +60,7 @@ export async function GET(request: Request, context: { params: Promise<{ type: s
             balance_points: retailer.balancePoints,
             consumed_points: retailer.consumedPoints,
             createdAt: userMaster.createdAt,
+            fcmToken: userMaster.fcmToken,
           })
           .from(userMaster)
           .innerJoin(retailer, eq(userMaster.userId, retailer.userId))
@@ -87,6 +89,7 @@ export async function GET(request: Request, context: { params: Promise<{ type: s
             balance_points: distributor.balancePoints,
             consumed_points: distributor.consumedPoints,
             createdAt: distributor.createdAt,
+            fcmToken: userMaster.fcmToken,
           })
           .from(distributor)
           .innerJoin(userMaster, eq(distributor.userId, userMaster.userId))
@@ -111,6 +114,7 @@ export async function GET(request: Request, context: { params: Promise<{ type: s
             username: userMaster.username,
             mobileNumber: salesperson.mobileNumber,
             createdAt: salesperson.createdAt,
+            fcmToken: userMaster.fcmToken,
           })
           .from(salesperson)
           .innerJoin(userMaster, eq(salesperson.userId, userMaster.userId))

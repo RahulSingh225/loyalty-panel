@@ -19,6 +19,24 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   output: "standalone",
+
+  webpack(config, { isServer }) {
+    // Enable WebAssembly experiments
+    config.experiments = {
+      ...config.experiments,
+      asyncWebAssembly: true, // Recommended for modern async WebAssembly
+      // syncWebAssembly: true, // Deprecated, use only if needed
+    };
+
+    // Add rule for .wasm files
+    config.module.rules.push({
+      test: /\.wasm$/,
+      type: 'webassembly/async', // Use async WebAssembly
+      // type: 'webassembly/sync', // Use only if syncWebAssembly is enabled
+    });
+
+    return config;
+  },
   
 };
 

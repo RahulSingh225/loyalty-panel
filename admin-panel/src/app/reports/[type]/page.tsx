@@ -9,6 +9,7 @@ import { useParams } from 'next/navigation';
 import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import moment from 'moment';
+import {firebaseService} from "@/app/services/firebase.service";
 
 export default function ReportPage() {
   const [data, setData] = useState<any[]>([]);
@@ -21,7 +22,16 @@ export default function ReportPage() {
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
     const [refNo, setRefNo] = useState<string>('');
+     
     const [mobileFilter, setMobileFilter] = useState<string>('');
+    const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+    const [detailsData, setDetailsData] = useState(null);
+    const [detailsLoading, setDetailsLoading] = useState(false);
+    const [notificationModalOpen, setNotificationModalOpen] = useState(false);
+    const [notificationTitle, setNotificationTitle] = useState("");
+    const [notificationBody, setNotificationBody] = useState("");
+    const [notificationLoading, setNotificationLoading] = useState(false);
+    const [notificationTargetId, setNotificationTargetId] = useState(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -195,8 +205,8 @@ export default function ReportPage() {
         }
       `}</style>
       <div className="min-h-screen bg-base-100 p-4 md:p-6 lg:p-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="card bg-base-200 shadow-xl">
+        <div className=" mx-auto">
+          <div className="flex card bg-base-200 shadow-xl">
             <div className="card-body">
               <div className="flex justify-between items-center mb-6">
                 <h1 className="card-title text-2xl md:text-3xl capitalize btn-shine">
@@ -261,7 +271,7 @@ export default function ReportPage() {
               </div>
               <div className="divider"></div>
               <div className="overflow-x-auto">
-                <table className="table table-zebra w-full">
+                <table className="table w-[80vw] max-w-[80vw] mx-auto">
                   <thead>
                     <tr>
                       <th>ID</th>
@@ -297,13 +307,14 @@ export default function ReportPage() {
                             {paginatedData.length > 0 && Object.keys(paginatedData[0]).filter(key => !['username','mobileNumber','createdAt'].includes(key)).map(key => (
                               <th key={key}>{key}</th>
                             ))}
+                            <th>Actions</th>
                           </>
                         )}
                     </tr>
                   </thead>
                   <tbody>
                     {paginatedData.map((item) => (
-                      <tr key={item.id} className="hover">
+                      <tr key={item.id}>
                         <td>{item.id}</td>
                         <td>{item.username}</td>
                           {params.type === "login" && (
@@ -337,6 +348,40 @@ export default function ReportPage() {
                               {Object.keys(item).filter(key => !['username','mobileNumber','createdAt'].includes(key)).map(key => (
                                 <td key={key}>{String(item[key])}</td>
                               ))}
+                              <td>
+                                <div className="flex gap-2">
+                                  <button
+                                    className="btn btn-primary btn-xs"
+                                    onClick={async () => {
+                                      console.log('View Details clicked for', item);
+                                      if (params.type === "retailers" && item.refno) {
+                                        setDetailsLoading(true);
+                                        setDetailsModalOpen(true);
+                                        try {
+                                          const res = await fetch(`/nextapi/retailer/${item.refno}`);
+                                          const result = await res.json();
+                                          setDetailsData(result);
+                                        } catch (e) {
+                                          setDetailsData({ error: 'Failed to fetch details' });
+                                        }
+                                        setDetailsLoading(false);
+                                      }
+                                      // TODO: Add similar logic for agents/salesperson if needed
+                                    }}
+                                  >
+                                    View Details
+                                  </button>
+                                  <button
+                                    className="btn btn-secondary btn-xs"
+                                    onClick={() => {
+                                      setNotificationTargetId(item.fcmToken);
+                                      setNotificationModalOpen(true);
+                                    }}
+                                  >
+                                    Send Notification
+                                  </button>
+                                </div>
+                              </td>
                             </>
                           )}
                       </tr>
@@ -393,7 +438,128 @@ export default function ReportPage() {
           pauseOnHover
           theme="colored"
         />
+
+        {/* Retailer Details Modal */}
+        {detailsModalOpen && (
+          <div className="modal modal-open">
+            <div className="modal-box max-w-2xl">
+              <h3 className="font-bold text-lg mb-4">Retailer Details</h3>
+              {detailsLoading ? (
+                <span className="loading loading-spinner loading-lg"></span>
+              ) : detailsData && !detailsData.error ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Detail label="Retailer ID" value={detailsData.retailerId} />
+                  <Detail label="User ID" value={detailsData.userId} />
+                  <Detail label="Distributor ID" value={detailsData.distributorId} />
+                  <Detail label="Shop Name" value={detailsData.shopName} />
+                  <Detail label="Shop Address" value={detailsData.shopAddress} />
+                  <Detail label="Pin Code" value={detailsData.pinCode} />
+                  <Detail label="City" value={detailsData.city} />
+                  <Detail label="State" value={detailsData.state} />
+                  <Detail label="Whatsapp No" value={detailsData.whatsappNo} />
+                  <Detail label="PAN No" value={detailsData.panNo} />
+                  <Detail label="GST Registration No" value={detailsData.gstRegistrationNo} />
+                  <Detail label="Aadhaar Card No" value={detailsData.aadhaarCardNo} />
+                  <Detail label="Navision ID" value={detailsData.navisionId} />
+                  
+                  <Detail label="Created At" value={detailsData.createdAt} />
+                  <Detail label="Updated At" value={detailsData.updatedAt} />
+                  <Detail label="Total Points" value={detailsData.totalPoints} />
+                  <Detail label="Balance Points" value={detailsData.balancePoints} />
+                  <Detail label="Consumed Points" value={detailsData.consumedPoints} />
+                  <Detail label="Home Address" value={detailsData.homeAddress} />
+                  
+                  <Detail label="Beat Name" value={detailsData.beatName} />
+                  
+                  <Detail label="Sales Agent Code" value={detailsData.salesAgentCodee} />
+                  
+                </div>
+              ) : (
+                <div className="text-error">{detailsData?.error || 'No details found.'}</div>
+              )}
+              <div className="modal-action">
+                <button className="btn btn-ghost" onClick={() => setDetailsModalOpen(false)}>
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Send Notification Dialog */}
+        {notificationModalOpen && (
+          <div className="modal modal-open">
+            <div className="modal-box max-w-md">
+              <h3 className="font-bold text-lg mb-4">Send Notification</h3>
+              <div className="form-control mb-4">
+                <label className="label">
+                  <span className="label-text">Title</span>
+                </label>
+                <input
+                  type="text"
+                  className="input input-bordered w-full"
+                  value={notificationTitle}
+                  onChange={e => setNotificationTitle(e.target.value)}
+                  placeholder="Enter notification title"
+                />
+              </div>
+              <div className="form-control mb-4">
+                <label className="label">
+                  <span className="label-text">Body</span>
+                </label>
+                <textarea
+                  className="textarea textarea-bordered w-full"
+                  value={notificationBody}
+                  onChange={e => setNotificationBody(e.target.value)}
+                  placeholder="Enter notification body"
+                />
+              </div>
+              <div className="modal-action">
+                <button
+                  className="btn btn-primary"
+                  disabled={notificationLoading}
+                  onClick={async () => {
+                    setNotificationLoading(true);
+                    try {
+                      await firebaseService.sendNotification(
+                        {
+                          title: notificationTitle,
+                          body: notificationBody,
+                        },
+                        {
+                          type: "single",
+                          token: notificationTargetId // You may need to adjust this to the correct token property
+                        }
+                      );
+                      // Optionally show success toast
+                    } catch (e) {
+                      // Optionally show error toast
+                    }
+                    setNotificationLoading(false);
+                    setNotificationModalOpen(false);
+                    setNotificationTitle("");
+                    setNotificationBody("");
+                  }}
+                >
+                  Send
+                </button>
+                <button className="btn btn-ghost" onClick={() => setNotificationModalOpen(false)}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
+  );
+}
+
+function Detail({ label, value }) {
+  return (
+    <div className="flex flex-col">
+      <span className="font-semibold text-base-content/80">{label}</span>
+      <span className="text-base-content/60 break-all">{value ?? '-'}</span>
+    </div>
   );
 }
