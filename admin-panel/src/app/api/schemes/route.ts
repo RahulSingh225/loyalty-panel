@@ -67,10 +67,12 @@ export async function POST(req: NextRequest) {
     const schemeName = formData.get('schemeName') as string;
     const startDate = formData.get('startDate') as string;
     const endDate = formData.get('endDate') as string;
-    const roles = formData.get('roles') as string;
+    const roles = JSON.parse(formData.get('roles') as string);
     const schemePreview = formData.get('schemePreview') as File;
     const file = formData.get('file') as File;
- 
+    
+
+    
     
     // Validate required fields
     if (!schemeName || !startDate || !endDate || !roles) {
@@ -130,7 +132,7 @@ export async function POST(req: NextRequest) {
       endDate,
       schemeResourcee: fileKey,
       schemePreview: previewFileKey || null, // Use uploaded preview URL or provided schemePreview
-      applicableRoles: [parseInt(roles)], // Convert to integer array
+      applicableRoles: (roles), // Convert to integer array
       isActive: true,
     });
 

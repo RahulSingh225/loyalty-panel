@@ -101,7 +101,7 @@ export default function ContentManagementPage() {
     try {
       const method = selectedContent ? 'PUT' : 'POST';
       const url = selectedContent
-        ? `/api/content-management/${selectedContent.contentId}`
+        ? `/nextapi/content-management/${selectedContent.contentId}`
         : '/nextapi/content-management';
 
       const formDataToSend = new FormData();

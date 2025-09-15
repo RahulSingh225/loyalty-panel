@@ -101,7 +101,7 @@ export default function CommunicationsPage() {
   }
 
   if (status === "unauthenticated") {
-    redirect("/api/auth/signin");
+    redirect("/nextapi/auth/signin");
   }
 
   return (

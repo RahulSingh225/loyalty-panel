@@ -2,7 +2,7 @@ import { salesperson } from "@/db/schema";
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { auth } from "@/auth";
-import { desc, eq, and, gte, lte } from "drizzle-orm";
+import { desc, eq, and, gte, lte, like,or } from "drizzle-orm";
 import { distributor, userMaster } from "@/db/schema";
 import { retailer } from "@/db/schema";
 import { pointAllocationLog } from "@/db/schema";
@@ -22,6 +22,7 @@ export async function GET(request: Request, context: { params: Promise<{ type: s
   const endDate = searchParams.get('endDate');
   const refNo = searchParams.get('refNo');
   const mobileNumber = searchParams.get('mobileNumber');
+  const username = searchParams.get('username');
   try {
     let data;
     switch (type) {
@@ -30,7 +31,7 @@ export async function GET(request: Request, context: { params: Promise<{ type: s
           .select({
             id: userMaster.userId,
             username: userMaster.username,
-            loginTime: userMaster.updatedAt,
+            loginTime: userMaster.lastLoginAt,
             userType: userMaster.userType,
           })
           .from(userMaster)
@@ -67,8 +68,11 @@ export async function GET(request: Request, context: { params: Promise<{ type: s
           .where(
             and(
               eq(userMaster.userType, 'retailer'),
+              or(
               mobileNumber ? eq(userMaster.mobileNumber, mobileNumber) : undefined,
-              refNo ? eq(retailer.navisionId, refNo) : undefined
+              refNo ? eq(retailer.navisionId, refNo) : undefined,
+              username ? like(userMaster.username, username) : undefined,
+              )
             )
           )
           .orderBy(desc(userMaster.createdAt))
@@ -94,9 +98,11 @@ export async function GET(request: Request, context: { params: Promise<{ type: s
           .from(distributor)
           .innerJoin(userMaster, eq(distributor.userId, userMaster.userId))
           .where(
-            and(
+            or(
               mobileNumber ? eq(distributor.phoneNumber, mobileNumber) : undefined,
-              refNo ? eq(distributor.navisionId, refNo) : undefined
+              refNo ? eq(distributor.navisionId, refNo) : undefined,
+              username ? like(userMaster.username, username) : undefined,
+
             )
           )
           .orderBy(desc(distributor.createdAt))
@@ -119,9 +125,10 @@ export async function GET(request: Request, context: { params: Promise<{ type: s
           .from(salesperson)
           .innerJoin(userMaster, eq(salesperson.userId, userMaster.userId))
           .where(
-            and(
+            or(
               mobileNumber ? eq(salesperson.mobileNumber, mobileNumber) : undefined,
-              refNo ? eq(salesperson.navisionId, refNo) : undefined
+              refNo ? eq(salesperson.navisionId, refNo) : undefined,
+              username ? like(userMaster.username, username) : undefined,
             )
           )
           .orderBy(desc(salesperson.createdAt))

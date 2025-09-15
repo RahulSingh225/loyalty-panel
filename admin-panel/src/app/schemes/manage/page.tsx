@@ -23,7 +23,7 @@ export default function LoyaltySchemesPage() {
     schemeName: '',
     startDate: '',
     endDate: '',
-    roles: '',
+    roles: [],
     imagePdfUrl: '',
   });
   const fileInputRef = useRef(null); // Reference for imagePdfUrl file input
@@ -97,13 +97,13 @@ export default function LoyaltySchemesPage() {
     e.preventDefault();
     try {
       const method = selectedScheme ? 'PUT' : 'POST';
-      const url = selectedScheme ? `/api/schemes/${selectedScheme.schemeId}` : '/nextapi/schemes';
+      const url = selectedScheme ? `/nextapi/schemes/${selectedScheme.schemeId}` : '/nextapi/schemes';
 
       const form = new FormData();
       form.append('schemeName', formData.schemeName);
       form.append('startDate', formData.startDate);
       form.append('endDate', formData.endDate);
-      form.append('roles', formData.roles);
+      form.append('roles', JSON.stringify(formData.roles));
       if (file) {
         form.append('file', file); // For schemeResourcee
       }
@@ -131,7 +131,7 @@ export default function LoyaltySchemesPage() {
         schemeName: '',
         startDate: '',
         endDate: '',
-        roles: '',
+        roles: [],
         imagePdfUrl: '',
       });
       setSelectedScheme(null);
@@ -297,7 +297,7 @@ export default function LoyaltySchemesPage() {
                       schemeName: '',
                       startDate: '',
                       endDate: '',
-                      roles: '',
+                      roles: [],
                       imagePdfUrl: '',
                     });
                     setFile(null);
@@ -366,6 +366,7 @@ export default function LoyaltySchemesPage() {
                             </a>
                           ) : '-'}
                         </td>
+                        {item.schemeId!=1 && 
                         <td className="text-sm md:text-base">
                           <button
                             className="btn btn-error btn-xs"
@@ -377,6 +378,7 @@ export default function LoyaltySchemesPage() {
                             Remove
                           </button>
                         </td>
+}
                       </tr>
                     ))}
                   </tbody>
@@ -452,23 +454,64 @@ export default function LoyaltySchemesPage() {
                     maxLength={50}
                   />
                 </div>
-                {/* Target Audience Dropdown */}
+                {/* Target Audience Multi-select */}
                 <div>
                   <label className="label">
                     <span className="label-text">Roles</span>
                   </label>
-                  <select
-                    name="roles"
-                    value={formData.roles}
-                    onChange={handleInputChange}
-                    className="select select-bordered w-full"
-                    required
-                  >
-                    <option value="">Select</option>
-                    <option value="3">Sales</option>
-                    <option value="2">Distributor</option>
-                    <option value="1">Retailer</option>
-                  </select>
+                  <div className="dropdown w-full">
+                    <label tabIndex={0} className="btn btn-bordered w-full flex justify-between items-center bg-base-100">
+                      {formData.roles?.length ? 
+                        `${formData.roles.length} roles selected` : 
+                        'Select roles'}
+                      <span className="ml-2">▼</span>
+                    </label>
+                    <div tabIndex={0} className="dropdown-content w-full bg-base-200 rounded-box shadow mt-1 p-2">
+                      <label className="flex items-center p-2 hover:bg-base-300 rounded cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="checkbox"
+                          checked={formData.roles?.length === 3}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setFormData(prev => ({ ...prev, roles: ['1', '2', '3'] }));
+                            } else {
+                              setFormData(prev => ({ ...prev, roles: [] }));
+                            }
+                          }}
+                        />
+                        <span className="ml-2">Select All</span>
+                      </label>
+                      <div className="divider my-1"></div>
+                      {[
+                        { value: '3', label: 'Sales' },
+                        { value: '2', label: 'Distributor' },
+                        { value: '1', label: 'Retailer' }
+                      ].map(role => (
+                        <label key={role.value} className="flex items-center p-2 hover:bg-base-300 rounded cursor-pointer">
+                          <input
+                            type="checkbox"
+                            className="checkbox"
+                            checked={formData.roles?.includes(role.value)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  roles: [...(prev.roles || []), role.value]
+                                }));
+                              } else {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  roles: prev.roles?.filter(r => r !== role.value) || []
+                                }));
+                              }
+                            }}
+                          />
+                          <span className="ml-2">{role.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
                 </div>
                 {/* Image/PDF URL */}
                 <div>

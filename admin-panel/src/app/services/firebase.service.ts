@@ -1,3 +1,6 @@
+
+
+import { Batch } from 'aws-sdk';
 import * as admin from 'firebase-admin';
 
 // Interface for Firebase configuration
@@ -75,7 +78,7 @@ class FirebaseService {
   }
 
   // Send notification to specified targets
-  async sendNotification(payload: NotificationPayload, target: NotificationTarget): Promise<void> {
+  async sendNotification(payload: NotificationPayload, target: NotificationTarget): Promise<any> {
     try {
       let tokens: string[] = [];
 
@@ -133,7 +136,7 @@ class FirebaseService {
             }
           : undefined,
       };
-
+      console.log('sending message to tokens:', tokens);
       // Send notifications in batches (FCM supports up to 500 tokens per request)
       const batchSize = 500;
       for (let i = 0; i < tokens.length; i += batchSize) {
@@ -152,6 +155,7 @@ class FirebaseService {
             }
           });
         }
+        return response.successCount
       }
     } catch (error) {
       console.error('Error sending notification:', error);

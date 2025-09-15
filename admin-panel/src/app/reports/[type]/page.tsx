@@ -22,7 +22,7 @@ export default function ReportPage() {
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
     const [refNo, setRefNo] = useState<string>('');
-     
+     const [usernameFilter, setUsernameFilter] = useState<string>('');
     const [mobileFilter, setMobileFilter] = useState<string>('');
     const [detailsModalOpen, setDetailsModalOpen] = useState(false);
     const [detailsData, setDetailsData] = useState(null);
@@ -46,6 +46,7 @@ export default function ReportPage() {
 
         if (refNo) queryParams.append('refNo', refNo);
         if (mobileFilter) queryParams.append('mobileNumber', mobileFilter);
+        if(usernameFilter) queryParams.append('username', usernameFilter);
 
         const res = await fetch(`/nextapi/reports/${params.type}?${queryParams.toString()}`, {
           headers: {
@@ -112,6 +113,33 @@ export default function ReportPage() {
     setFilteredData(filtered);
     setCurrentPage(1);
   }, [data, startDate, endDate, params.type]);
+
+
+  async function sendNotification() { 
+ try {
+
+  const body = {
+    payload:{ title: notificationTitle, body: notificationBody },
+    target: { type: "single", token: notificationTargetId }
+
+  }
+                  const res =   await fetch('/nextapi/communication/single', {
+                    method:'POST',
+                    headers: {
+                      Authorization: `Bearer ${session.user.id}`,
+                    
+                    },
+                    body:JSON.stringify(body),  
+ })
+                      
+                      // Optionally show success toast
+                    } catch (e) {
+                      const { message } = handleError(error, `Report ${params.type}`);
+        setError(message);
+        showErrorToast(message);
+                    }
+
+  }
 
   if (error) {
     return (
@@ -217,6 +245,18 @@ export default function ReportPage() {
               <div className="flex flex-col sm:flex-row gap-4 mb-6">
                 {(params.type === "agents" || params.type === "salesperson" || params.type === "retailers") ? (
                   <>
+                   <div className="form-control flex-1">
+                      <label className="label">
+                        <span className="label-text">Username</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={usernameFilter}
+                        onChange={(e) => setUsernameFilter(e.target.value)}
+                        className="input input-bordered w-full"
+                        placeholder="Enter Username"
+                      />
+                    </div>
                     <div className="form-control flex-1">
                       <label className="label">
                         <span className="label-text">Ref No</span>
@@ -519,22 +559,11 @@ export default function ReportPage() {
                   className="btn btn-primary"
                   disabled={notificationLoading}
                   onClick={async () => {
+                    console.log('Notification Target ID:', notificationTargetId);
                     setNotificationLoading(true);
-                    try {
-                      await firebaseService.sendNotification(
-                        {
-                          title: notificationTitle,
-                          body: notificationBody,
-                        },
-                        {
-                          type: "single",
-                          token: notificationTargetId // You may need to adjust this to the correct token property
-                        }
-                      );
-                      // Optionally show success toast
-                    } catch (e) {
-                      // Optionally show error toast
-                    }
+                    
+                    await sendNotification();
+                   
                     setNotificationLoading(false);
                     setNotificationModalOpen(false);
                     setNotificationTitle("");
