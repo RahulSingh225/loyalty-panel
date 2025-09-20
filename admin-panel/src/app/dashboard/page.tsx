@@ -128,6 +128,21 @@ export default async function DashboardPage() {
                 </div>
               </div>
             </div>
+            <div className="card bg-base-200 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 rounded-box overflow-hidden relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-secondary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="card-body relative z-10">
+                <h3 className="card-title text-lg md:text-xl">OTP Report</h3>
+                <p className="text-sm opacity-70 mt-1">View OTP requests and validation logs</p>
+                <div className="card-actions justify-end mt-4">
+                  <Link
+                    href="/reports/otp"
+                    className="btn btn-primary btn-sm rounded-btn bg-gradient-to-r from-primary to-secondary text-primary-content border-none hover:from-primary-focus hover:to-secondary-focus hover:scale-110 transition-all duration-300"
+                  >
+                    View Report
+                  </Link>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 

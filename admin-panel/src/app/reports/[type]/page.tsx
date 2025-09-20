@@ -59,7 +59,7 @@ export default function ReportPage() {
         if (res.status !== 200) {
           throw new Error(result.error || "Failed to fetch report");
         }
-
+        console.log(result)
         setData(result);
         setFilteredData(result);
       } catch (error) {
@@ -340,6 +340,14 @@ export default function ReportPage() {
                             <th>Claim Date</th>
                           </>
                         )}
+                        {params.type === "otp" && (
+                          <>
+                            <th>Mobile Number</th>
+                            <th>OTP</th>
+                            <th>Status</th>
+                            <th>Created At</th>
+                          </>
+                        )}
                         {(params.type === "retailers" || params.type === "agents" || params.type === "salesperson") && (
                           <>
                             <th>Mobile Number</th>
@@ -379,6 +387,14 @@ export default function ReportPage() {
                             <>
                               <td>{item.status}</td>
                               <td>{item.claimDate}</td>
+                            </>
+                          )}
+                          {params.type === "otp" && (
+                            <>
+                              <td>{item.mobileNumber}</td>
+                              <td>{item.otpCode}</td>
+                              <td>{item.status}</td>
+                              <td>{item.createdAt}</td>
                             </>
                           )}
                           {(params.type === "retailers" || params.type === "agents" || params.type === "salesperson") && (
@@ -487,44 +503,39 @@ export default function ReportPage() {
               {detailsLoading ? (
                 <span className="loading loading-spinner loading-lg"></span>
               ) : detailsData && !detailsData.error ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Detail label="Retailer ID" value={detailsData.retailerId} />
-                  <Detail label="User ID" value={detailsData.userId} />
-                  <Detail label="Distributor ID" value={detailsData.distributorId} />
-                  <Detail label="Shop Name" value={detailsData.shopName} />
-                  <Detail label="Shop Address" value={detailsData.shopAddress} />
-                  <Detail label="Pin Code" value={detailsData.pinCode} />
-                  <Detail label="City" value={detailsData.city} />
-                  <Detail label="State" value={detailsData.state} />
-                  <Detail label="Whatsapp No" value={detailsData.whatsappNo} />
-                  <Detail label="PAN No" value={detailsData.panNo} />
-                  <Detail label="GST Registration No" value={detailsData.gstRegistrationNo} />
-                  <Detail label="Aadhaar Card No" value={detailsData.aadhaarCardNo} />
-                  <Detail label="Navision ID" value={detailsData.navisionId} />
-                  
-                  <Detail label="Created At" value={detailsData.createdAt} />
-                  <Detail label="Updated At" value={detailsData.updatedAt} />
-                  <Detail label="Total Points" value={detailsData.totalPoints} />
-                  <Detail label="Balance Points" value={detailsData.balancePoints} />
-                  <Detail label="Consumed Points" value={detailsData.consumedPoints} />
-                  <Detail label="Home Address" value={detailsData.homeAddress} />
-                  
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Detail label="Retailer ID" value={detailsData.retailerId} />
+                    <Detail label="User ID" value={detailsData.userId} />
+                    <Detail label="Distributor ID" value={detailsData.distributorId} />
+                    <Detail label="Shop Name" value={detailsData.shopName} />
+                    <Detail label="Shop Address" value={detailsData.shopAddress} />
+                    <Detail label="Pin Code" value={detailsData.pinCode} />
+                    <Detail label="City" value={detailsData.city} />
+                    <Detail label="State" value={detailsData.state} />
+                    <Detail label="Whatsapp No" value={detailsData.whatsappNo} />
+                    <Detail label="PAN No" value={detailsData.panNo} />
+                    <Detail label="GST Registration No" value={detailsData.gstRegistrationNo} />
+                    <Detail label="Aadhaar Card No" value={detailsData.aadhaarCardNo} />
+                    <Detail label="Navision ID" value={detailsData.navisionId} />
+                    <Detail label="Home Address" value={detailsData.homeAddress} />
                   <Detail label="Beat Name" value={detailsData.beatName} />
-                  
                   <Detail label="Sales Agent Code" value={detailsData.salesAgentCodee} />
-                  
-                </div>
+
+                    <Detail label="Created At" value={detailsData.createdAt} />
+                  </div>
+                  <div className="modal-action">
+                    <button className="btn btn-primary" onClick={() => setDetailsModalOpen(false)}>
+                      Close
+                    </button>
+                  </div>
+                </>
               ) : (
-                <div className="text-error">{detailsData?.error || 'No details found.'}</div>
+                <div>No details available.</div>
               )}
-              <div className="modal-action">
-                <button className="btn btn-ghost" onClick={() => setDetailsModalOpen(false)}>
-                  Close
-                </button>
-              </div>
-            </div>
+                </div>
           </div>
-        )}
+      )}
 
         {/* Send Notification Dialog */}
         {notificationModalOpen && (

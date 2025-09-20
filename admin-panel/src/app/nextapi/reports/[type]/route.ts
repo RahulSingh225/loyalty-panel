@@ -2,11 +2,12 @@ import { salesperson } from "@/db/schema";
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { auth } from "@/auth";
-import { desc, eq, and, gte, lte, like,or } from "drizzle-orm";
+import { desc, eq, and, gte, lte, like,or, isNotNull } from "drizzle-orm";
 import { distributor, userMaster } from "@/db/schema";
 import { retailer } from "@/db/schema";
 import { pointAllocationLog } from "@/db/schema";
 import { redemptionRequest } from "@/db/schema";
+import { smsOtp } from "@/db/schema";
 import moment from "moment";
 import { fchmod } from "fs";
 
@@ -37,8 +38,9 @@ export async function GET(request: Request, context: { params: Promise<{ type: s
           .from(userMaster)
           .where(
             and(
-              startDate ? gte(userMaster.updatedAt, new Date(startDate)) : undefined,
-              endDate ? lte(userMaster.updatedAt, new Date(endDate)) : undefined
+              startDate ? gte(userMaster.updatedAt, startDate) : undefined,
+              endDate ? lte(userMaster.updatedAt, endDate) : undefined,
+              isNotNull(userMaster.lastLoginAt)
             )
           )
           .orderBy(desc(userMaster.updatedAt))
@@ -151,8 +153,8 @@ export async function GET(request: Request, context: { params: Promise<{ type: s
           .from(retailer)
           .where(
             and(
-              startDate ? gte(retailer.createdAt, new Date(startDate)) : undefined,
-              endDate ? lte(retailer.createdAt, new Date(endDate)) : undefined
+              startDate ? gte(retailer.createdAt, startDate) : undefined,
+              endDate ? lte(retailer.createdAt, endDate) : undefined
             )
           )
           .orderBy(desc(retailer.createdAt))
@@ -178,8 +180,8 @@ export async function GET(request: Request, context: { params: Promise<{ type: s
           .innerJoin(userMaster, eq(pointAllocationLog.targetUserId, userMaster.userId))
           .where(
             and(
-              startDate ? gte(pointAllocationLog.allocationDate, new Date(startDate)) : undefined,
-              endDate ? lte(pointAllocationLog.allocationDate, new Date(endDate)) : undefined
+              startDate ? gte(pointAllocationLog.allocationDate, startDate) : undefined,
+              endDate ? lte(pointAllocationLog.allocationDate, endDate) : undefined
             )
           )
           .orderBy(desc(pointAllocationLog.allocationDate))
@@ -204,8 +206,8 @@ export async function GET(request: Request, context: { params: Promise<{ type: s
           .innerJoin(userMaster, eq(redemptionRequest.userId, userMaster.userId))
           .where(
             and(
-              startDate ? gte(redemptionRequest.requestDate, new Date(startDate)) : undefined,
-              endDate ? lte(redemptionRequest.requestDate, new Date(endDate)) : undefined
+              startDate ? gte(redemptionRequest.requestDate, startDate) : undefined,
+              endDate ? lte(redemptionRequest.requestDate, endDate) : undefined
             )
           )
           .orderBy(desc(redemptionRequest.requestDate))
@@ -215,6 +217,33 @@ export async function GET(request: Request, context: { params: Promise<{ type: s
               claimDate: row.claimDate
                 ? moment(row.claimDate).format('LLL')
                 : null,
+            }))
+          );
+        break;
+      case "otp":
+        data = await db
+          .select({
+            id: smsOtp.id,
+            mobileNumber: smsOtp.mobileNumber,
+            otpCode: smsOtp.otp,
+            smsContent: smsOtp.smsContent,
+            isSent: smsOtp.isSent,
+            createdAt: smsOtp.createdAt,
+          })
+          .from(smsOtp)
+          .where(
+            and(
+              startDate ? gte(smsOtp.createdAt, startDate) : undefined,
+              endDate ? lte(smsOtp.createdAt, endDate) : undefined,
+              mobileNumber ? eq(smsOtp.mobileNumber, mobileNumber) : undefined
+            )
+          )
+          .orderBy(desc(smsOtp.createdAt))
+          .then((rows) =>
+            rows.map((row) => ({
+              ...row,
+              status: row.isSent ? 'sent' : 'pending',
+              createdAt: row.createdAt ? moment(row.createdAt).format('LLL') : null,
             }))
           );
         break;

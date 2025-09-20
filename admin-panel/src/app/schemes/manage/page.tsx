@@ -162,7 +162,7 @@ export default function LoyaltySchemesPage() {
       schemeName: content.schemeName || '',
       startDate: content.startDate || '',
       endDate: content.endDate || '',
-      roles: content.applicableRoles || '',
+      roles: content.applicableRoles || [],
       imagePdfUrl: content.schemeResourceUrl || '',
     });
     setFile(null);
@@ -585,7 +585,7 @@ export default function LoyaltySchemesPage() {
                         schemeName: '',
                         startDate: '',
                         endDate: '',
-                        roles: '',
+                        roles: [],
                         imagePdfUrl: '',
                       });
                       setSelectedScheme(null);

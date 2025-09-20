@@ -1,14 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  async rewrites() {
-    return [
-      {
-        source: '/nextapi/:path*',
-        destination: '/api/:path*',
-      },
-    ];
-  },
+  // async rewrites() {
+  //   return [
+  //     {
+  //       source: '/nextapi/:path*',
+  //       destination: '/api/:path*',
+  //     },
+  //   ];
+  // },
  typescript: {
     // Ignore TypeScript errors during build
     ignoreBuildErrors: true,

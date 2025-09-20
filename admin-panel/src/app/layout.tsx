@@ -57,7 +57,7 @@ export default async function RootLayout({
               </div>
             </div>
             )}
-          <SessionProvider session={session}>{children}</SessionProvider>
+          <SessionProvider basePath="/nextapi/auth" session={session}>{children}</SessionProvider>
          <footer className="footer footer-center p-10 bg-base-200 text-base-content rounded-box mt-12">
         <div>
           <p className="btn-shine font-semibold">Talkk Loyalty &copy; {new Date().getFullYear()}</p>

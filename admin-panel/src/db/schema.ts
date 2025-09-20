@@ -1,7 +1,36 @@
-import { pgTable, unique, varchar, boolean, integer, numeric, timestamp, text, serial, json, foreignKey, jsonb, date, primaryKey } from "drizzle-orm/pg-core"
+import { pgTable, foreignKey, unique, serial, integer, varchar, text, timestamp, numeric, boolean, json, jsonb, date, primaryKey } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 
+
+export const distributor = pgTable("distributor", {
+	distributorId: serial("distributor_id").primaryKey().notNull(),
+	userId: integer("user_id").notNull(),
+	distributorName: varchar("distributor_name", { length: 255 }).notNull(),
+	contactPerson: varchar("contact_person", { length: 255 }),
+	phoneNumber: varchar("phone_number", { length: 20 }),
+	email: varchar({ length: 255 }),
+	address: text(),
+	city: varchar({ length: 100 }),
+	state: varchar({ length: 100 }),
+	zipCode: varchar("zip_code", { length: 20 }),
+	gstNumber: varchar("gst_number", { length: 15 }),
+	navisionId: varchar("navision_id", { length: 100 }),
+	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+	totalPoints: numeric("total_points", { precision: 15, scale:  2 }).default('0'),
+	balancePoints: numeric("balance_points", { precision: 15, scale:  2 }).default('0'),
+	consumedPoints: numeric("consumed_points", { precision: 15, scale:  2 }).default('0'),
+	salesPersonCode: text("sales_person_code"),
+}, (table) => [
+	foreignKey({
+			columns: [table.userId],
+			foreignColumns: [userMaster.userId],
+			name: "distributor_user_id_fkey"
+		}),
+	unique("distributor_user_id_key").on(table.userId),
+	unique("distributor_navision_id_key").on(table.navisionId),
+]);
 
 export const salesPointsClaimTransfer = pgTable("sales_points_claim_transfer", {
 	documentNo: varchar("document_no", { length: 50 }),
@@ -185,6 +214,38 @@ export const gifts = pgTable("gifts", {
 	value: integer(),
 });
 
+export const pointAllocationLog = pgTable("point_allocation_log", {
+	allocationId: serial("allocation_id").primaryKey().notNull(),
+	invoiceId: integer("invoice_id"),
+	sourceUserId: integer("source_user_id"),
+	targetUserId: integer("target_user_id").notNull(),
+	pointsAllocated: numeric("points_allocated", { precision: 20, scale:  2 }).notNull(),
+	allocationDate: timestamp("allocation_date", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+	allocationMethod: varchar("allocation_method", { length: 50 }).notNull(),
+	status: varchar({ length: 50 }).default('success'),
+	adminApprovedBy: integer("admin_approved_by"),
+	adminApprovalDate: timestamp("admin_approval_date", { mode: 'string' }),
+	description: text(),
+	details: json().array(),
+	documentNo: text("document_no"),
+}, (table) => [
+	foreignKey({
+			columns: [table.adminApprovedBy],
+			foreignColumns: [userMaster.userId],
+			name: "point_allocation_log_admin_approved_by_fkey"
+		}),
+	foreignKey({
+			columns: [table.sourceUserId],
+			foreignColumns: [userMaster.userId],
+			name: "point_allocation_log_source_user_id_fkey"
+		}),
+	foreignKey({
+			columns: [table.targetUserId],
+			foreignColumns: [userMaster.userId],
+			name: "point_allocation_log_target_user_id_fkey"
+		}),
+]);
+
 export const navisionVendorMaster = pgTable("navision_vendor_master", {
 	no: varchar("No", { length: 20 }).primaryKey().notNull(),
 	name: varchar("Name", { length: 100 }),
@@ -233,38 +294,6 @@ export const navisionCustomerMaster = pgTable("navision_customer_master", {
 	onboardedAt: timestamp("OnboardedAt", { mode: 'string' }),
 }, (table) => [
 	unique("customer_unique").on(table.no),
-]);
-
-export const pointAllocationLog = pgTable("point_allocation_log", {
-	allocationId: serial("allocation_id").primaryKey().notNull(),
-	invoiceId: integer("invoice_id"),
-	sourceUserId: integer("source_user_id"),
-	targetUserId: integer("target_user_id").notNull(),
-	pointsAllocated: integer("points_allocated").notNull(),
-	allocationDate: timestamp("allocation_date", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
-	allocationMethod: varchar("allocation_method", { length: 50 }).notNull(),
-	status: varchar({ length: 50 }).default('success'),
-	adminApprovedBy: integer("admin_approved_by"),
-	adminApprovalDate: timestamp("admin_approval_date", { mode: 'string' }),
-	description: text(),
-	details: json().array(),
-	documentNo: text("document_no"),
-}, (table) => [
-	foreignKey({
-			columns: [table.adminApprovedBy],
-			foreignColumns: [userMaster.userId],
-			name: "point_allocation_log_admin_approved_by_fkey"
-		}),
-	foreignKey({
-			columns: [table.sourceUserId],
-			foreignColumns: [userMaster.userId],
-			name: "point_allocation_log_source_user_id_fkey"
-		}),
-	foreignKey({
-			columns: [table.targetUserId],
-			foreignColumns: [userMaster.userId],
-			name: "point_allocation_log_target_user_id_fkey"
-		}),
 ]);
 
 export const permissions = pgTable("permissions", {
@@ -338,35 +367,6 @@ export const schemes = pgTable("schemes", {
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
 	schemePreview: text("scheme_preview"),
 });
-
-export const distributor = pgTable("distributor", {
-	distributorId: serial("distributor_id").primaryKey().notNull(),
-	userId: integer("user_id").notNull(),
-	distributorName: varchar("distributor_name", { length: 255 }).notNull(),
-	contactPerson: varchar("contact_person", { length: 255 }),
-	phoneNumber: varchar("phone_number", { length: 20 }),
-	email: varchar({ length: 255 }),
-	address: text(),
-	city: varchar({ length: 100 }),
-	state: varchar({ length: 100 }),
-	zipCode: varchar("zip_code", { length: 20 }),
-	gstNumber: varchar("gst_number", { length: 15 }),
-	navisionId: varchar("navision_id", { length: 100 }),
-	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
-	updatedAt: timestamp("updated_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
-	totalPoints: integer("total_points").default(0),
-	balancePoints: integer("balance_points").default(0),
-	consumedPoints: integer("consumed_points").default(0),
-	salesPersonCode: text("sales_person_code"),
-}, (table) => [
-	foreignKey({
-			columns: [table.userId],
-			foreignColumns: [userMaster.userId],
-			name: "distributor_user_id_fkey"
-		}),
-	unique("distributor_user_id_key").on(table.userId),
-	unique("distributor_navision_id_key").on(table.navisionId),
-]);
 
 export const userRoles = pgTable("user_roles", {
 	roleId: serial("role_id").primaryKey().notNull(),
@@ -482,8 +482,6 @@ export const userMaster = pgTable("user_master", {
 			name: "user_master_role_id_fkey"
 		}),
 	unique("user_master_email_key").on(table.email),
-	unique("user_master_mobile_number_key").on(table.mobileNumber),
-	unique("user_master_secondary_mobile_number_key").on(table.secondaryMobileNumber),
 ]);
 
 export const navisionRetailMaster = pgTable("navision_retail_master", {
@@ -543,6 +541,16 @@ export const salesperson = pgTable("salesperson", {
 	unique("salesperson_user_id_key").on(table.userId),
 	unique("salesperson_navision_id_key").on(table.navisionId),
 ]);
+
+export const smsOtp = pgTable("sms_otp", {
+	id: serial().primaryKey().notNull(),
+	mobileNumber: text("mobile_number").notNull(),
+	otp: integer().notNull(),
+	smsContent: text("sms_content"),
+	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+	apiResponse: text("api_response"),
+	isSent: boolean("is_sent").default(false),
+});
 
 export const rolePermissions = pgTable("role_permissions", {
 	roleId: integer("role_id").notNull(),
