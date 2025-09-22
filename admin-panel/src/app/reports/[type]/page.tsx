@@ -410,11 +410,20 @@ export default function ReportPage() {
                                     className="btn btn-primary btn-xs"
                                     onClick={async () => {
                                       console.log('View Details clicked for', item);
+                                      let endpoint = '';
                                       if (params.type === "retailers" && item.refno) {
+                                        endpoint = `/nextapi/retailer/${item.refno}`;
+                                      } else if (params.type === "agents" && item.refno) {
+                                        endpoint = `/nextapi/agent/${item.refno}`;
+                                      } else if (params.type === "salesperson" && item.refno) {
+                                        endpoint = `/nextapi/salesperson/${item.refno}`;
+                                      }
+                                      
+                                      if (endpoint) {
                                         setDetailsLoading(true);
                                         setDetailsModalOpen(true);
                                         try {
-                                          const res = await fetch(`/nextapi/retailer/${item.refno}`);
+                                          const res = await fetch(endpoint);
                                           const result = await res.json();
                                           setDetailsData(result);
                                         } catch (e) {
@@ -422,7 +431,6 @@ export default function ReportPage() {
                                         }
                                         setDetailsLoading(false);
                                       }
-                                      // TODO: Add similar logic for agents/salesperson if needed
                                     }}
                                   >
                                     View Details
@@ -499,29 +507,71 @@ export default function ReportPage() {
         {detailsModalOpen && (
           <div className="modal modal-open">
             <div className="modal-box max-w-2xl">
-              <h3 className="font-bold text-lg mb-4">Retailer Details</h3>
+              <h3 className="font-bold text-lg mb-4">
+                {params.type === "retailers" ? "Retailer Details" : 
+                 params.type === "agents" ? "Agent Details" : 
+                 params.type === "salesperson" ? "Salesperson Details" : "Details"}
+              </h3>
               {detailsLoading ? (
                 <span className="loading loading-spinner loading-lg"></span>
               ) : detailsData && !detailsData.error ? (
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Detail label="Retailer ID" value={detailsData.retailerId} />
-                    <Detail label="User ID" value={detailsData.userId} />
-                    <Detail label="Distributor ID" value={detailsData.distributorId} />
-                    <Detail label="Shop Name" value={detailsData.shopName} />
-                    <Detail label="Shop Address" value={detailsData.shopAddress} />
-                    <Detail label="Pin Code" value={detailsData.pinCode} />
-                    <Detail label="City" value={detailsData.city} />
-                    <Detail label="State" value={detailsData.state} />
-                    <Detail label="Whatsapp No" value={detailsData.whatsappNo} />
-                    <Detail label="PAN No" value={detailsData.panNo} />
-                    <Detail label="GST Registration No" value={detailsData.gstRegistrationNo} />
-                    <Detail label="Aadhaar Card No" value={detailsData.aadhaarCardNo} />
-                    <Detail label="Navision ID" value={detailsData.navisionId} />
-                    <Detail label="Home Address" value={detailsData.homeAddress} />
-                  <Detail label="Beat Name" value={detailsData.beatName} />
-                  <Detail label="Sales Agent Code" value={detailsData.salesAgentCodee} />
-
+                    {params.type === "retailers" ? (
+                      <>
+                        <Detail label="Retailer ID" value={detailsData.retailerId} />
+                        <Detail label="User ID" value={detailsData.userId} />
+                        <Detail label="Distributor ID" value={detailsData.distributorId} />
+                        <Detail label="Shop Name" value={detailsData.shopName} />
+                        <Detail label="Shop Address" value={detailsData.shopAddress} />
+                        <Detail label="Pin Code" value={detailsData.pinCode} />
+                        <Detail label="City" value={detailsData.city} />
+                        <Detail label="State" value={detailsData.state} />
+                        <Detail label="Whatsapp No" value={detailsData.whatsappNo} />
+                        <Detail label="PAN No" value={detailsData.panNo} />
+                        <Detail label="GST Registration No" value={detailsData.gstRegistrationNo} />
+                        <Detail label="Aadhaar Card No" value={detailsData.aadhaarCardNo} />
+                        <Detail label="Navision ID" value={detailsData.navisionId} />
+                        <Detail label="Home Address" value={detailsData.homeAddress} />
+                        <Detail label="Beat Name" value={detailsData.beatName} />
+                        <Detail label="Sales Agent Code" value={detailsData.salesAgentCodee} />
+                      </>
+                    ) : params.type === "agents" ? (
+                      <>
+                        <Detail label="Distributor ID" value={detailsData.distributorId} />
+                        <Detail label="User ID" value={detailsData.userId} />
+                        <Detail label="Distributor Name" value={detailsData.distributorName} />
+                        <Detail label="Contact Person" value={detailsData.contactPerson} />
+                        <Detail label="Phone Number" value={detailsData.phoneNumber} />
+                        <Detail label="Email" value={detailsData.email} />
+                        <Detail label="Address" value={detailsData.address} />
+                        <Detail label="City" value={detailsData.city} />
+                        <Detail label="State" value={detailsData.state} />
+                        <Detail label="ZIP Code" value={detailsData.zipCode} />
+                        <Detail label="GST Number" value={detailsData.gstNumber} />
+                        <Detail label="Navision ID" value={detailsData.navisionId} />
+                        <Detail label="Total Points" value={detailsData.totalPoints} />
+                        <Detail label="Balance Points" value={detailsData.balancePoints} />
+                        <Detail label="Consumed Points" value={detailsData.consumedPoints} />
+                        <Detail label="Sales Person Code" value={detailsData.salesPersonCode} />
+                      </>
+                    ) : params.type === "salesperson" ? (
+                      <>
+                        <Detail label="Salesperson ID" value={detailsData.salespersonId} />
+                        <Detail label="User ID" value={detailsData.userId} />
+                        <Detail label="Salesperson Name" value={detailsData.salespersonName} />
+                        <Detail label="Distributor ID" value={detailsData.distributorId} />
+                        <Detail label="Email" value={detailsData.email} />
+                        <Detail label="Mobile Number" value={detailsData.mobileNumber} />
+                        <Detail label="Address" value={detailsData.address} />
+                        <Detail label="Address 2" value={detailsData.address2} />
+                        <Detail label="City" value={detailsData.city} />
+                        <Detail label="State" value={detailsData.state} />
+                        <Detail label="PIN Code" value={detailsData.pinCode} />
+                        <Detail label="Navision ID" value={detailsData.navisionId} />
+                        <Detail label="Username" value={detailsData.username} />
+                      </>
+                    ) : null}
                     <Detail label="Created At" value={detailsData.createdAt} />
                   </div>
                   <div className="modal-action">
