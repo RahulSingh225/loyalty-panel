@@ -6,6 +6,6 @@ export default defineConfig({
   schema: './src/db/schema.ts',
   dialect: 'postgresql',
   dbCredentials: {
-    url: 'postgresql://dbadmin:Dbadmin@123@10.0.2.213:5432/ranjit_loyalty',
+    url: '',
   },
 });
