@@ -105,13 +105,14 @@ export class SingleOnboardService {
     }
 
     const existingUser = await db
-      .select()
+      .select({navisionId:retailer.navisionId, userId:userMaster.userId})
       .from(userMaster)
+      .innerJoin(retailer, eq(retailer.userId, userMaster.userId))
       .where(and(eq(userMaster.mobileNumber, mobile), eq(userMaster.userType, 'retailer')))
       .limit(1);
 
     if (existingUser.length > 0) {
-      return { success: true, user_id: existingUser[0].userId, message: 'Already onboarded' };
+      return { success: false, user_id: existingUser[0].userId, message: `Mobile number onboarded with NAVID ${existingUser[0].navisionId}` };
     }
 
     const passwordHash = await this.hashPassword();

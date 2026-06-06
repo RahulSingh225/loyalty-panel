@@ -32,6 +32,9 @@ export async function GET(request: NextRequest) {
         name: navisionCustomerMaster.name,
         whatsappNo1: navisionCustomerMaster.whatsappNo1,
         whatsappNo2:navisionCustomerMaster.whatsappNo2,
+        salesAgent: navisionCustomerMaster.salesAgent,
+        salesAgentName: navisionCustomerMaster.salesAgentName,
+        salespersonCode: navisionCustomerMaster.salespersonCode,
         onboarded: sql<boolean>`CASE WHEN EXISTS(SELECT 1 FROM ${retailer} WHERE ${retailer.navisionId} = ${navisionCustomerMaster.no}) THEN true ELSE false END`,
       })
       .from(navisionCustomerMaster)

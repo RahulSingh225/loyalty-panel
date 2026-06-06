@@ -119,6 +119,35 @@ export default function MasterReportPage() {
     });
   }
 
+  async function handleExport() {
+    try {
+      const tab = TABS.find(t => t.key === active)!;
+      const params = new URLSearchParams();
+      params.set('master', tab.key);
+      if (navid) params.set('navid', navid);
+
+      const res = await fetch(`/nextapi/master/export?${params.toString()}`);
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        showErrorToast(json.error || 'Export failed');
+        return;
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${tab.key}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Export error', error);
+      showErrorToast('Export failed');
+    }
+  }
+
   function getIdField() {
     return TABS.find(t => t.key === active)?.idField || "no";
   }
@@ -173,6 +202,7 @@ export default function MasterReportPage() {
           />
           <button className="btn btn-primary" type="submit">Search</button>
           <button type="button" className="btn" onClick={() => { setNavid(''); setPage(1); fetchData(); }}>Clear</button>
+          <button type="button" className="btn btn-outline" onClick={() => handleExport()}>Export CSV</button>
         </form>
 
         <div className="card bg-base-200 p-4">
@@ -184,28 +214,31 @@ export default function MasterReportPage() {
                 <table className="table w-full">
                   <thead>
                     <tr>
-                      <th>ID</th>
-                      <th>Name</th>
-                      <th>Mobile</th>
-                      <th>Status</th>
-                      <th>Actions</th>
+                      {data.length > 0 ? (
+                        Object.keys(data[0]).map((key) => (
+                          <th key={key}>{key === 'onboarded' ? 'Status' : key}</th>
+                        ))
+                      ) : (
+                        <th>No records</th>
+                      )}
                     </tr>
                   </thead>
                   <tbody>
                     {data.map((row, idx) => {
+                      const keys = Object.keys(row);
                       const idField = getIdField();
                       const rowId = row[idField] || String(idx);
                       return (
                         <tr key={idx}>
-                          <td><span className="font-mono text-sm">{rowId}</span></td>
-                          <td>{row.name || '-'}</td>
-                          <td>{row.whatsappNo || row.whatsappMobileNumber || row.whatsappNo1 || '-'}</td>
-                          <td>
-                            <OnboardedCell value={row.onboarded} rowId={rowId} />
-                          </td>
-                          <td>
-                            <button className="btn btn-xs btn-ghost">View</button>
-                          </td>
+                          {keys.map((k) => (
+                            <td key={k}>
+                              {k === 'onboarded' ? (
+                                <OnboardedCell value={!!row[k]} rowId={rowId} />
+                              ) : (
+                                <span className={k === idField ? 'font-mono text-sm' : ''}>{String(row[k] ?? '-')}</span>
+                              )}
+                            </td>
+                          ))}
                         </tr>
                       );
                     })}

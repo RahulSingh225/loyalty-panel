@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     } else {
         console.log("Onboard failed:", result);
       return NextResponse.json(
-        { success: false, error: result.error || "Onboarding failed" },
+        { success: false, error: result.message || "Onboarding failed" },
         { status: 400 }
       );
     }
